@@ -128,3 +128,8 @@ config XIANGSHAN_KUNMINGHU
     select RISCV_APLIC
     select RISCV_IMSIC
     select SERIAL_MM
+
+config LYNX
+    bool
+    default y
+    depends on RISCV32 || RISCV64
