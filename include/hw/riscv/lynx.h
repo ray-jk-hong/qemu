@@ -134,17 +134,17 @@ enum {
 
 bool lynx_is_acpi_enabled(RISCVVirtState *s);
 bool lynx_is_iommu_sys_enabled(RISCVVirtState *s);
-void virt_acpi_setup(RISCVVirtState *vms);
+void lynx_acpi_setup(RISCVVirtState *vms);
 uint32_t lynx_imsic_num_bits(uint32_t count);
 
 /*
- * The virt machine physical address space used by some of the devices
+ * The lynx machine physical address space used by some of the devices
  * namely ACLINT, PLIC, APLIC, and IMSIC depend on number of Sockets,
  * number of CPUs, and number of IMSIC guest files.
  *
  * Various limits defined by VIRT_SOCKETS_MAX_BITS, VIRT_CPUS_MAX_BITS,
  * and VIRT_IRQCHIP_MAX_GUESTS_BITS are tuned for maximum utilization
- * of virt machine physical address space.
+ * of lynx machine physical address space.
  */
 
 #define VIRT_IMSIC_GROUP_MAX_SIZE      (1U << IMSIC_MMIO_GROUP_MIN_SHIFT)

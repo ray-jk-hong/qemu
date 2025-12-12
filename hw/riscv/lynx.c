@@ -1389,7 +1389,7 @@ static void create_platform_bus(RISCVVirtState *s, DeviceState *irqchip)
                                 sysbus_mmio_get_region(sysbus, 0));
 }
 
-static void virt_build_smbios(RISCVVirtState *s)
+static void lynx_build_smbios(RISCVVirtState *s)
 {
     MachineClass *mc = MACHINE_GET_CLASS(s);
     MachineState *ms = MACHINE(s);
@@ -1518,10 +1518,10 @@ static void virt_machine_done(Notifier *notifier, void *data)
         riscv_setup_direct_kernel(kernel_entry, fdt_load_addr);
     }
 
-    virt_build_smbios(s);
+    lynx_build_smbios(s);
 
     if (lynx_is_acpi_enabled(s)) {
-        virt_acpi_setup(s);
+        lynx_acpi_setup(s);
     }
 }
 
@@ -1746,7 +1746,7 @@ static void virt_machine_init(MachineState *machine)
     qemu_add_machine_init_done_notifier(&s->machine_done);
 }
 
-static void virt_machine_instance_init(Object *obj)
+static void lynx_machine_instance_init(Object *obj)
 {
     RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
 
@@ -1758,14 +1758,14 @@ static void virt_machine_instance_init(Object *obj)
     s->iommu_sys = ON_OFF_AUTO_AUTO;
 }
 
-static char *virt_get_aia_guests(Object *obj, Error **errp)
+static char *lynx_get_aia_guests(Object *obj, Error **errp)
 {
     RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
 
     return g_strdup_printf("%d", s->aia_guests);
 }
 
-static void virt_set_aia_guests(Object *obj, const char *val, Error **errp)
+static void lynx_set_aia_guests(Object *obj, const char *val, Error **errp)
 {
     RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
 
@@ -1797,7 +1797,7 @@ static char *virt_get_aia(Object *obj, Error **errp)
     return g_strdup(val);
 }
 
-static void virt_set_aia(Object *obj, const char *val, Error **errp)
+static void lynx_set_aia(Object *obj, const char *val, Error **errp)
 {
     RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
 
@@ -1912,7 +1912,7 @@ static void virt_machine_device_plug_cb(HotplugHandler *hotplug_dev,
     }
 }
 
-static void virt_machine_class_init(ObjectClass *oc, const void *data)
+static void lynx_machine_class_init(ObjectClass *oc, const void *data)
 {
     MachineClass *mc = MACHINE_CLASS(oc);
     HotplugHandlerClass *hc = HOTPLUG_HANDLER_CLASS(oc);
@@ -1950,15 +1950,15 @@ static void virt_machine_class_init(ObjectClass *oc, const void *data)
                                           "ACLINT devices");
 
     object_class_property_add_str(oc, "aia", virt_get_aia,
-                                  virt_set_aia);
+                                  lynx_set_aia);
     object_class_property_set_description(oc, "aia",
                                           "Set type of AIA interrupt "
                                           "controller. Valid values are "
                                           "none, aplic, and aplic-imsic.");
 
     object_class_property_add_str(oc, "aia-guests",
-                                  virt_get_aia_guests,
-                                  virt_set_aia_guests);
+                                  lynx_get_aia_guests,
+                                  lynx_set_aia_guests);
     {
         g_autofree char *str =
             g_strdup_printf("Set number of guest MMIO pages for AIA IMSIC. "
@@ -1980,11 +1980,11 @@ static void virt_machine_class_init(ObjectClass *oc, const void *data)
                                           "Enable IOMMU platform device");
 }
 
-static const TypeInfo virt_machine_typeinfo = {
+static const TypeInfo lynx_machine_typeinfo = {
     .name       = MACHINE_TYPE_NAME("lynx"),
     .parent     = TYPE_MACHINE,
-    .class_init = virt_machine_class_init,
-    .instance_init = virt_machine_instance_init,
+    .class_init = lynx_machine_class_init,
+    .instance_init = lynx_machine_instance_init,
     .instance_size = sizeof(RISCVVirtState),
     .interfaces = (const InterfaceInfo[]) {
          { TYPE_HOTPLUG_HANDLER },
@@ -1992,9 +1992,9 @@ static const TypeInfo virt_machine_typeinfo = {
     },
 };
 
-static void virt_machine_init_register_types(void)
+static void lynx_machine_init_register_types(void)
 {
-    type_register_static(&virt_machine_typeinfo);
+    type_register_static(&lynx_machine_typeinfo);
 }
 
-type_init(virt_machine_init_register_types)
+type_init(lynx_machine_init_register_types)
