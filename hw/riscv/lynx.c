@@ -62,14 +62,14 @@
 #define LYNX_SERIAL_REG_SHIFT 2
 
 /* KVM AIA only supports APLIC MSI. APLIC Wired is always emulated by QEMU. */
-static bool virt_use_kvm_aia_aplic_imsic(RISCVVirtAIAType aia_type)
+static bool lynx_use_kvm_aia_aplic_imsic(RISCVVirtAIAType aia_type)
 {
     bool msimode = aia_type == LYNX_AIA_TYPE_APLIC_IMSIC;
 
     return riscv_is_kvm_aia_aplic_imsic(msimode);
 }
 
-static bool virt_aclint_allowed(void)
+static bool lynx_aclint_allowed(void)
 {
     return tcg_enabled() || qtest_enabled();
 }
@@ -84,7 +84,7 @@ static const MemMapEntry lynx_memmap[] = {
     [LYNX_PCIE_PIO] =     {  0x3000000,       0x10000 },
     [LYNX_IOMMU_SYS] =    {  0x3010000,        0x1000 },
     [LYNX_PLATFORM_BUS] = {  0x4000000,     0x2000000 },
-    [LYNX_PLIC] =         {  0xc000000, VIRT_PLIC_SIZE(LYNX_CPUS_MAX * 2) },
+    [LYNX_PLIC] =         {  0xc000000, LYNX_PLIC_SIZE(LYNX_CPUS_MAX * 2) },
     [LYNX_APLIC_M] =      {  0xc000000, APLIC_SIZE(LYNX_CPUS_MAX) },
     [LYNX_APLIC_S] =      {  0xd000000, APLIC_SIZE(LYNX_CPUS_MAX) },
     [LYNX_UART0] =        { 0x10000000,         0x100 },
@@ -400,7 +400,7 @@ static DeviceState *lynx_create_aia(RISCVVirtAIAType aia_type, int aia_guests,
     return kvm_enabled() ? aplic_s : aplic_m;
 }
 
-static void create_platform_bus(RISCVLynxState *s, DeviceState *irqchip)
+static void lynx_create_platform_bus(RISCVLynxState *s, DeviceState *irqchip)
 {
     DeviceState *dev;
     SysBusDevice *sysbus;
@@ -571,7 +571,7 @@ static void lynx_machine_init(MachineState *machine)
         exit(1);
     }
 
-    if (!virt_aclint_allowed() && s->have_aclint) {
+    if (!lynx_aclint_allowed() && s->have_aclint) {
         error_report("'aclint' is only available with TCG acceleration");
         exit(1);
     }
@@ -608,7 +608,7 @@ static void lynx_machine_init(MachineState *machine)
                                 hart_count, &error_abort);
         sysbus_realize(SYS_BUS_DEVICE(&s->soc[i]), &error_fatal);
 
-        if (virt_aclint_allowed() && s->have_aclint) {
+        if (lynx_aclint_allowed() && s->have_aclint) {
             if (s->aia_type == LYNX_AIA_TYPE_APLIC_IMSIC) {
                 /* Per-socket ACLINT MTIMER */
                 riscv_aclint_mtimer_create(s->memmap[LYNX_CLINT].base +
@@ -672,7 +672,7 @@ static void lynx_machine_init(MachineState *machine)
         }
     }
 
-    if (kvm_enabled() && virt_use_kvm_aia_aplic_imsic(s->aia_type)) {
+    if (kvm_enabled() && lynx_use_kvm_aia_aplic_imsic(s->aia_type)) {
         kvm_riscv_aia_create(machine, IMSIC_MMIO_GROUP_MIN_SHIFT,
                              LYNX_IRQCHIP_NUM_SOURCES, LYNX_IRQCHIP_NUM_MSIS,
                              s->memmap[LYNX_APLIC_S].base,
@@ -727,7 +727,7 @@ static void lynx_machine_init(MachineState *machine)
 
     lynx_gpex_pcie_init(system_memory, pcie_irqchip, s);
 
-    create_platform_bus(s, mmio_irqchip);
+    lynx_create_platform_bus(s, mmio_irqchip);
 
     serial_mm_init(system_memory, s->memmap[LYNX_UART0].base,
         LYNX_SERIAL_REG_SHIFT, qdev_get_gpio_in(mmio_irqchip, LYNX_UART0_IRQ), 

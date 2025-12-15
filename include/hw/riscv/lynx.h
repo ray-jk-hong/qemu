@@ -114,7 +114,7 @@ enum {
 #define LYNX_PLIC_ENABLE_STRIDE 0x80
 #define LYNX_PLIC_CONTEXT_BASE 0x200000
 #define LYNX_PLIC_CONTEXT_STRIDE 0x1000
-#define VIRT_PLIC_SIZE(__num_context) \
+#define LYNX_PLIC_SIZE(__num_context) \
     (LYNX_PLIC_CONTEXT_BASE + (__num_context) * LYNX_PLIC_CONTEXT_STRIDE)
 
 #define FDT_PCI_ADDR_CELLS    3
