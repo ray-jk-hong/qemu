@@ -840,7 +840,7 @@ static void lynx_set_aia(Object *obj, const char *val, Error **errp)
     }
 }
 
-static bool virt_get_aclint(Object *obj, Error **errp)
+static bool lynx_get_aclint(Object *obj, Error **errp)
 {
     RISCVLynxState *s = RISCV_LYNX_MACHINE(obj);
 
@@ -968,7 +968,7 @@ static void lynx_machine_class_init(ObjectClass *oc, const void *data)
     machine_class_allow_dynamic_sysbus_dev(mc, TYPE_TPM_TIS_SYSBUS);
 #endif
 
-    object_class_property_add_bool(oc, "aclint", virt_get_aclint,
+    object_class_property_add_bool(oc, "aclint", lynx_get_aclint,
                                    lynx_set_aclint);
     object_class_property_set_description(oc, "aclint",
                                           "(TCG only) Set on/off to "
