@@ -242,7 +242,7 @@ spcr_setup(GArray *table_data, BIOSLinker *linker, RISCVVirtState *s)
         .base_addr.addr = s->memmap[LYNX_UART0].base,
         .interrupt_type = (1 << 4),/* Bit[4] RISC-V PLIC/APLIC */
         .pc_interrupt = 0,
-        .interrupt = UART0_IRQ,
+        .interrupt = LYNX_UART0_IRQ,
         .baud_rate = 7,            /* 15200 */
         .parity = 0,
         .stop_bits = 1,
@@ -474,7 +474,7 @@ static void build_dsdt(GArray *table_data,
                                  memmap[LYNX_APLIC_S].size, "RSCV0002");
     }
 
-    acpi_dsdt_add_uart(scope, &memmap[LYNX_UART0], UART0_IRQ);
+    acpi_dsdt_add_uart(scope, &memmap[LYNX_UART0], LYNX_UART0_IRQ);
     if (lynx_is_iommu_sys_enabled(s)) {
         acpi_dsdt_add_iommu_sys(scope, &memmap[LYNX_IOMMU_SYS], IOMMU_SYS_IRQ);
     }

@@ -91,7 +91,7 @@ enum {
 };
 
 enum {
-    UART0_IRQ = 10,
+    LYNX_UART0_IRQ = 10,
     RTC_IRQ = 11,
     VIRTIO_IRQ = 1, /* 1 to 8 */
     VIRTIO_COUNT = 8,
