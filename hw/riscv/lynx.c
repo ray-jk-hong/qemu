@@ -734,7 +734,7 @@ static void lynx_machine_init(MachineState *machine)
         399193, serial_hd(0), DEVICE_LITTLE_ENDIAN);
 
     sysbus_create_simple("goldfish_rtc", s->memmap[LYNX_RTC].base,
-        qdev_get_gpio_in(mmio_irqchip, RTC_IRQ));
+        qdev_get_gpio_in(mmio_irqchip, LYNX_RTC_IRQ));
 
     for (i = 0; i < ARRAY_SIZE(s->flash); i++) {
         /* Map legacy -drive if=pflash to machine properties */

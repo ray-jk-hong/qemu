@@ -92,7 +92,7 @@ enum {
 
 enum {
     LYNX_UART0_IRQ = 10,
-    RTC_IRQ = 11,
+    LYNX_RTC_IRQ = 11,
     VIRTIO_IRQ = 1, /* 1 to 8 */
     VIRTIO_COUNT = 8,
     PCIE_IRQ = 0x20, /* 32 to 35 */
