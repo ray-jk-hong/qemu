@@ -64,7 +64,7 @@ static void acpi_align_size(GArray *blob, unsigned align)
 static void riscv_acpi_madt_add_rintc(uint32_t uid,
                                       const CPUArchIdList *arch_ids,
                                       GArray *entry,
-                                      RISCVVirtState *s)
+                                      RISCVLynxState *s)
 {
     uint8_t  guest_index_bits = lynx_imsic_num_bits(s->aia_guests + 1);
     uint64_t hart_id = arch_ids->cpus[uid].arch_id;
@@ -115,7 +115,7 @@ static void riscv_acpi_madt_add_rintc(uint32_t uid,
     }
 }
 
-static void acpi_dsdt_add_cpus(Aml *scope, RISCVVirtState *s)
+static void acpi_dsdt_add_cpus(Aml *scope, RISCVLynxState *s)
 {
     MachineClass *mc = MACHINE_GET_CLASS(s);
     MachineState *ms = MACHINE(s);
@@ -230,7 +230,7 @@ static void acpi_dsdt_add_iommu_sys(Aml *scope, const MemMapEntry *iommu_memmap,
  */
 
 static void
-spcr_setup(GArray *table_data, BIOSLinker *linker, RISCVVirtState *s)
+spcr_setup(GArray *table_data, BIOSLinker *linker, RISCVLynxState *s)
 {
     const char name[] = ".";
     AcpiSpcrData serial = {
@@ -275,7 +275,7 @@ spcr_setup(GArray *table_data, BIOSLinker *linker, RISCVVirtState *s)
  */
 static void build_rhct(GArray *table_data,
                        BIOSLinker *linker,
-                       RISCVVirtState *s)
+                       RISCVLynxState *s)
 {
     MachineClass *mc = MACHINE_GET_CLASS(s);
     MachineState *ms = MACHINE(s);
@@ -424,7 +424,7 @@ static void build_rhct(GArray *table_data,
  */
 static void build_fadt_rev6(GArray *table_data,
                             BIOSLinker *linker,
-                            RISCVVirtState *s,
+                            RISCVLynxState *s,
                             unsigned dsdt_tbl_offset)
 {
     AcpiFadtData fadt = {
@@ -440,7 +440,7 @@ static void build_fadt_rev6(GArray *table_data,
 /* DSDT */
 static void build_dsdt(GArray *table_data,
                        BIOSLinker *linker,
-                       RISCVVirtState *s)
+                       RISCVLynxState *s)
 {
     Aml *scope, *dsdt;
     MachineState *ms = MACHINE(s);
@@ -513,7 +513,7 @@ static void build_dsdt(GArray *table_data,
  */
 static void build_madt(GArray *table_data,
                        BIOSLinker *linker,
-                       RISCVVirtState *s)
+                       RISCVLynxState *s)
 {
     MachineClass *mc = MACHINE_GET_CLASS(s);
     MachineState *ms = MACHINE(s);
@@ -694,7 +694,7 @@ static int rimt_idmap_compare(gconstpointer a, gconstpointer b)
  * https://github.com/riscv-non-isa/riscv-acpi-rimt/releases/download/v0.99/rimt-spec.pdf
  */
 static void build_rimt(GArray *table_data, BIOSLinker *linker,
-                       RISCVVirtState *s)
+                       RISCVLynxState *s)
 {
     int i, nb_nodes, rc_mapping_count;
     size_t node_size, iommu_offset = 0;
@@ -813,7 +813,7 @@ static void build_rimt(GArray *table_data, BIOSLinker *linker,
  * 5.2.16 System Resource Affinity Table (SRAT)
  */
 static void
-build_srat(GArray *table_data, BIOSLinker *linker, RISCVVirtState *vms)
+build_srat(GArray *table_data, BIOSLinker *linker, RISCVLynxState *vms)
 {
     int i;
     uint64_t mem_base;
@@ -855,7 +855,7 @@ build_srat(GArray *table_data, BIOSLinker *linker, RISCVVirtState *vms)
     acpi_table_end(linker, &table);
 }
 
-static void lynx_acpi_build(RISCVVirtState *s, AcpiBuildTables *tables)
+static void lynx_acpi_build(RISCVLynxState *s, AcpiBuildTables *tables)
 {
     GArray *table_offsets;
     unsigned dsdt, xsdt;
@@ -1000,7 +1000,7 @@ static const VMStateDescription vmstate_virt_acpi_build = {
     },
 };
 
-void lynx_acpi_setup(RISCVVirtState *s)
+void lynx_acpi_setup(RISCVLynxState *s)
 {
     AcpiBuildTables tables;
     AcpiBuildState *build_state;

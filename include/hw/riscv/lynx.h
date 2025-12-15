@@ -31,8 +31,8 @@
 #define LYNX_SOCKETS_MAX               (1 << LYNX_SOCKETS_MAX_BITS)
 
 #define TYPE_RISCV_LYNX_MACHINE MACHINE_TYPE_NAME("lynx")
-typedef struct RISCVVirtState RISCVVirtState;
-DECLARE_INSTANCE_CHECKER(RISCVVirtState, RISCV_LYNX_MACHINE,
+typedef struct RISCVLynxState RISCVLynxState;
+DECLARE_INSTANCE_CHECKER(RISCVLynxState, RISCV_LYNX_MACHINE,
                          TYPE_RISCV_LYNX_MACHINE)
 
 typedef enum RISCVVirtAIAType {
@@ -41,7 +41,7 @@ typedef enum RISCVVirtAIAType {
     LYNX_AIA_TYPE_APLIC_IMSIC,
 } RISCVVirtAIAType;
 
-struct RISCVVirtState {
+struct RISCVLynxState {
     /*< private >*/
     MachineState parent;
 
@@ -132,9 +132,9 @@ enum {
 #define FDT_APLIC_INT_MAP_WIDTH (FDT_PCI_ADDR_CELLS + FDT_PCI_INT_CELLS + \
                                  1 + FDT_APLIC_INT_CELLS)
 
-bool lynx_is_acpi_enabled(RISCVVirtState *s);
-bool lynx_is_iommu_sys_enabled(RISCVVirtState *s);
-void lynx_acpi_setup(RISCVVirtState *vms);
+bool lynx_is_acpi_enabled(RISCVLynxState *s);
+bool lynx_is_iommu_sys_enabled(RISCVLynxState *s);
+void lynx_acpi_setup(RISCVLynxState *vms);
 uint32_t lynx_imsic_num_bits(uint32_t count);
 
 /*

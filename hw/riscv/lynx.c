@@ -109,7 +109,7 @@ static MemMapEntry virt_high_pcie_memmap;
 
 #define VIRT_FLASH_SECTOR_SIZE (256 * KiB)
 
-static PFlashCFI01 *lynx_flash_create1(RISCVVirtState *s,
+static PFlashCFI01 *lynx_flash_create1(RISCVLynxState *s,
                                        const char *name,
                                        const char *alias_prop_name)
 {
@@ -136,7 +136,7 @@ static PFlashCFI01 *lynx_flash_create1(RISCVVirtState *s,
     return PFLASH_CFI01(dev);
 }
 
-static void lynx_flash_create(RISCVVirtState *s)
+static void lynx_flash_create(RISCVLynxState *s)
 {
     s->flash[0] = lynx_flash_create1(s, "virt.flash0", "pflash0");
     s->flash[1] = lynx_flash_create1(s, "virt.flash1", "pflash1");
@@ -158,7 +158,7 @@ static void lynx_flash_map1(PFlashCFI01 *flash,
                                                        0));
 }
 
-static void lynx_flash_map(RISCVVirtState *s,
+static void lynx_flash_map(RISCVLynxState *s,
                            MemoryRegion *sysmem)
 {
     hwaddr flashsize = s->memmap[LYNX_FLASH].size / 2;
@@ -181,7 +181,7 @@ uint32_t lynx_imsic_num_bits(uint32_t count)
     return ret;
 }
 
-static void lynx_create_fdt_virtio_iommu(RISCVVirtState *s, uint16_t bdf)
+static void lynx_create_fdt_virtio_iommu(RISCVLynxState *s, uint16_t bdf)
 {
     const char compat[] = "virtio,pci-iommu\0pci1af4,1057";
     void *fdt = MACHINE(s)->fdt;
@@ -209,7 +209,7 @@ static void lynx_create_fdt_virtio_iommu(RISCVVirtState *s, uint16_t bdf)
                            bdf + 1, iommu_phandle, bdf + 1, 0xffff - bdf);
 }
 
-static void lynx_create_fdt_iommu(RISCVVirtState *s, uint16_t bdf)
+static void lynx_create_fdt_iommu(RISCVLynxState *s, uint16_t bdf)
 {
     const char comp[] = "riscv,pci-iommu";
     void *fdt = MACHINE(s)->fdt;
@@ -236,7 +236,7 @@ static void lynx_create_fdt_iommu(RISCVVirtState *s, uint16_t bdf)
 
 static inline DeviceState *lynx_gpex_pcie_init(MemoryRegion *sys_mem,
                                           DeviceState *irqchip,
-                                          RISCVVirtState *s)
+                                          RISCVLynxState *s)
 {
     DeviceState *dev;
     MemoryRegion *ecam_alias, *ecam_reg;
@@ -400,7 +400,7 @@ static DeviceState *lynx_create_aia(RISCVVirtAIAType aia_type, int aia_guests,
     return kvm_enabled() ? aplic_s : aplic_m;
 }
 
-static void create_platform_bus(RISCVVirtState *s, DeviceState *irqchip)
+static void create_platform_bus(RISCVLynxState *s, DeviceState *irqchip)
 {
     DeviceState *dev;
     SysBusDevice *sysbus;
@@ -425,7 +425,7 @@ static void create_platform_bus(RISCVVirtState *s, DeviceState *irqchip)
                                 sysbus_mmio_get_region(sysbus, 0));
 }
 
-static void lynx_build_smbios(RISCVVirtState *s)
+static void lynx_build_smbios(RISCVLynxState *s)
 {
     MachineClass *mc = MACHINE_GET_CLASS(s);
     MachineState *ms = MACHINE(s);
@@ -466,7 +466,7 @@ static void lynx_build_smbios(RISCVVirtState *s)
 
 static void lynx_machine_done(Notifier *notifier, void *data)
 {
-    RISCVVirtState *s = container_of(notifier, RISCVVirtState,
+    RISCVLynxState *s = container_of(notifier, RISCVLynxState,
                                      machine_done);
     MachineState *machine = MACHINE(s);
     hwaddr start_addr = s->memmap[LYNX_DRAM].base;
@@ -555,7 +555,7 @@ static void lynx_machine_done(Notifier *notifier, void *data)
 
 static void lynx_machine_init(MachineState *machine)
 {
-    RISCVVirtState *s = RISCV_LYNX_MACHINE(machine);
+    RISCVLynxState *s = RISCV_LYNX_MACHINE(machine);
     MemoryRegion *system_memory = get_system_memory();
     MemoryRegion *mask_rom = g_new(MemoryRegion, 1);
     DeviceState *mmio_irqchip, *virtio_irqchip, *pcie_irqchip;
@@ -774,7 +774,7 @@ static void lynx_machine_init(MachineState *machine)
 
 static void lynx_machine_instance_init(Object *obj)
 {
-    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
+    RISCVLynxState *s = RISCV_LYNX_MACHINE(obj);
 
     lynx_flash_create(s);
 
@@ -786,14 +786,14 @@ static void lynx_machine_instance_init(Object *obj)
 
 static char *lynx_get_aia_guests(Object *obj, Error **errp)
 {
-    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
+    RISCVLynxState *s = RISCV_LYNX_MACHINE(obj);
 
     return g_strdup_printf("%d", s->aia_guests);
 }
 
 static void lynx_set_aia_guests(Object *obj, const char *val, Error **errp)
 {
-    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
+    RISCVLynxState *s = RISCV_LYNX_MACHINE(obj);
 
     s->aia_guests = atoi(val);
     if (s->aia_guests < 0 || s->aia_guests > LYNX_IRQCHIP_MAX_GUESTS) {
@@ -805,7 +805,7 @@ static void lynx_set_aia_guests(Object *obj, const char *val, Error **errp)
 
 static char *lynx_get_aia(Object *obj, Error **errp)
 {
-    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
+    RISCVLynxState *s = RISCV_LYNX_MACHINE(obj);
     const char *val;
 
     switch (s->aia_type) {
@@ -825,7 +825,7 @@ static char *lynx_get_aia(Object *obj, Error **errp)
 
 static void lynx_set_aia(Object *obj, const char *val, Error **errp)
 {
-    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
+    RISCVLynxState *s = RISCV_LYNX_MACHINE(obj);
 
     if (!strcmp(val, "none")) {
         s->aia_type = LYNX_AIA_TYPE_NONE;
@@ -842,19 +842,19 @@ static void lynx_set_aia(Object *obj, const char *val, Error **errp)
 
 static bool virt_get_aclint(Object *obj, Error **errp)
 {
-    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
+    RISCVLynxState *s = RISCV_LYNX_MACHINE(obj);
 
     return s->have_aclint;
 }
 
 static void lynx_set_aclint(Object *obj, bool value, Error **errp)
 {
-    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
+    RISCVLynxState *s = RISCV_LYNX_MACHINE(obj);
 
     s->have_aclint = value;
 }
 
-bool lynx_is_iommu_sys_enabled(RISCVVirtState *s)
+bool lynx_is_iommu_sys_enabled(RISCVLynxState *s)
 {
     return s->iommu_sys == ON_OFF_AUTO_ON;
 }
@@ -862,7 +862,7 @@ bool lynx_is_iommu_sys_enabled(RISCVVirtState *s)
 static void lynx_get_iommu_sys(Object *obj, Visitor *v, const char *name,
                                void *opaque, Error **errp)
 {
-    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
+    RISCVLynxState *s = RISCV_LYNX_MACHINE(obj);
     OnOffAuto iommu_sys = s->iommu_sys;
 
     visit_type_OnOffAuto(v, name, &iommu_sys, errp);
@@ -871,12 +871,12 @@ static void lynx_get_iommu_sys(Object *obj, Visitor *v, const char *name,
 static void lynx_set_iommu_sys(Object *obj, Visitor *v, const char *name,
                                void *opaque, Error **errp)
 {
-    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
+    RISCVLynxState *s = RISCV_LYNX_MACHINE(obj);
 
     visit_type_OnOffAuto(v, name, &s->iommu_sys, errp);
 }
 
-bool lynx_is_acpi_enabled(RISCVVirtState *s)
+bool lynx_is_acpi_enabled(RISCVLynxState *s)
 {
     return s->acpi != ON_OFF_AUTO_OFF;
 }
@@ -884,7 +884,7 @@ bool lynx_is_acpi_enabled(RISCVVirtState *s)
 static void lynx_get_acpi(Object *obj, Visitor *v, const char *name,
                           void *opaque, Error **errp)
 {
-    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
+    RISCVLynxState *s = RISCV_LYNX_MACHINE(obj);
     OnOffAuto acpi = s->acpi;
 
     visit_type_OnOffAuto(v, name, &acpi, errp);
@@ -893,7 +893,7 @@ static void lynx_get_acpi(Object *obj, Visitor *v, const char *name,
 static void lynx_set_acpi(Object *obj, Visitor *v, const char *name,
                           void *opaque, Error **errp)
 {
-    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
+    RISCVLynxState *s = RISCV_LYNX_MACHINE(obj);
 
     visit_type_OnOffAuto(v, name, &s->acpi, errp);
 }
@@ -902,7 +902,7 @@ static HotplugHandler *lynx_machine_get_hotplug_handler(MachineState *machine,
                                                         DeviceState *dev)
 {
     MachineClass *mc = MACHINE_GET_CLASS(machine);
-    RISCVVirtState *s = RISCV_LYNX_MACHINE(machine);
+    RISCVLynxState *s = RISCV_LYNX_MACHINE(machine);
 
     if (device_is_dynamic_sysbus(mc, dev) ||
         object_dynamic_cast(OBJECT(dev), TYPE_VIRTIO_IOMMU_PCI) ||
@@ -917,7 +917,7 @@ static HotplugHandler *lynx_machine_get_hotplug_handler(MachineState *machine,
 static void lynx_machine_device_plug_cb(HotplugHandler *hotplug_dev,
                                         DeviceState *dev, Error **errp)
 {
-    RISCVVirtState *s = RISCV_LYNX_MACHINE(hotplug_dev);
+    RISCVLynxState *s = RISCV_LYNX_MACHINE(hotplug_dev);
 
     if (s->platform_bus_dev) {
         MachineClass *mc = MACHINE_GET_CLASS(s);
@@ -1011,7 +1011,7 @@ static const TypeInfo lynx_machine_typeinfo = {
     .parent     = TYPE_MACHINE,
     .class_init = lynx_machine_class_init,
     .instance_init = lynx_machine_instance_init,
-    .instance_size = sizeof(RISCVVirtState),
+    .instance_size = sizeof(RISCVLynxState),
     .interfaces = (const InterfaceInfo[]) {
          { TYPE_HOTPLUG_HANDLER },
          { }
