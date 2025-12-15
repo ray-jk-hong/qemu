@@ -855,7 +855,7 @@ build_srat(GArray *table_data, BIOSLinker *linker, RISCVVirtState *vms)
     acpi_table_end(linker, &table);
 }
 
-static void virt_acpi_build(RISCVVirtState *s, AcpiBuildTables *tables)
+static void lynx_acpi_build(RISCVVirtState *s, AcpiBuildTables *tables)
 {
     GArray *table_offsets;
     unsigned dsdt, xsdt;
@@ -975,7 +975,7 @@ static void virt_acpi_build_update(void *build_opaque)
 
     acpi_build_tables_init(&tables);
 
-    virt_acpi_build(RISCV_VIRT_MACHINE(qdev_get_machine()), &tables);
+    lynx_acpi_build(RISCV_LYNX_MACHINE(qdev_get_machine()), &tables);
 
     acpi_ram_update(build_state->table_mr, tables.table_data);
     acpi_ram_update(build_state->rsdp_mr, tables.rsdp);
@@ -984,14 +984,14 @@ static void virt_acpi_build_update(void *build_opaque)
     acpi_build_tables_cleanup(&tables, true);
 }
 
-static void virt_acpi_build_reset(void *build_opaque)
+static void lynx_acpi_build_reset(void *build_opaque)
 {
     AcpiBuildState *build_state = build_opaque;
     build_state->patched = false;
 }
 
 static const VMStateDescription vmstate_virt_acpi_build = {
-    .name = "virt_acpi_build",
+    .name = "lynx_acpi_build",
     .version_id = 1,
     .minimum_version_id = 1,
     .fields = (const VMStateField[]) {
@@ -1008,7 +1008,7 @@ void lynx_acpi_setup(RISCVVirtState *s)
     build_state = g_malloc0(sizeof *build_state);
 
     acpi_build_tables_init(&tables);
-    virt_acpi_build(s, &tables);
+    lynx_acpi_build(s, &tables);
 
     /* Now expose it all to Guest */
     build_state->table_mr = acpi_add_rom_blob(virt_acpi_build_update,
@@ -1025,8 +1025,8 @@ void lynx_acpi_setup(RISCVVirtState *s)
                                              build_state, tables.rsdp,
                                              ACPI_BUILD_RSDP_FILE);
 
-    qemu_register_reset(virt_acpi_build_reset, build_state);
-    virt_acpi_build_reset(build_state);
+    qemu_register_reset(lynx_acpi_build_reset, build_state);
+    lynx_acpi_build_reset(build_state);
     vmstate_register(NULL, 0, &vmstate_virt_acpi_build, build_state);
 
     /*

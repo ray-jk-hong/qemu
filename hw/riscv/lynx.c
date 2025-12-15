@@ -555,7 +555,7 @@ static void lynx_machine_done(Notifier *notifier, void *data)
 
 static void lynx_machine_init(MachineState *machine)
 {
-    RISCVVirtState *s = RISCV_VIRT_MACHINE(machine);
+    RISCVVirtState *s = RISCV_LYNX_MACHINE(machine);
     MemoryRegion *system_memory = get_system_memory();
     MemoryRegion *mask_rom = g_new(MemoryRegion, 1);
     DeviceState *mmio_irqchip, *virtio_irqchip, *pcie_irqchip;
@@ -774,7 +774,7 @@ static void lynx_machine_init(MachineState *machine)
 
 static void lynx_machine_instance_init(Object *obj)
 {
-    RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
+    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
 
     lynx_flash_create(s);
 
@@ -786,14 +786,14 @@ static void lynx_machine_instance_init(Object *obj)
 
 static char *lynx_get_aia_guests(Object *obj, Error **errp)
 {
-    RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
+    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
 
     return g_strdup_printf("%d", s->aia_guests);
 }
 
 static void lynx_set_aia_guests(Object *obj, const char *val, Error **errp)
 {
-    RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
+    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
 
     s->aia_guests = atoi(val);
     if (s->aia_guests < 0 || s->aia_guests > VIRT_IRQCHIP_MAX_GUESTS) {
@@ -805,7 +805,7 @@ static void lynx_set_aia_guests(Object *obj, const char *val, Error **errp)
 
 static char *lynx_get_aia(Object *obj, Error **errp)
 {
-    RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
+    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
     const char *val;
 
     switch (s->aia_type) {
@@ -825,7 +825,7 @@ static char *lynx_get_aia(Object *obj, Error **errp)
 
 static void lynx_set_aia(Object *obj, const char *val, Error **errp)
 {
-    RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
+    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
 
     if (!strcmp(val, "none")) {
         s->aia_type = VIRT_AIA_TYPE_NONE;
@@ -842,14 +842,14 @@ static void lynx_set_aia(Object *obj, const char *val, Error **errp)
 
 static bool virt_get_aclint(Object *obj, Error **errp)
 {
-    RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
+    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
 
     return s->have_aclint;
 }
 
 static void lynx_set_aclint(Object *obj, bool value, Error **errp)
 {
-    RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
+    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
 
     s->have_aclint = value;
 }
@@ -862,7 +862,7 @@ bool lynx_is_iommu_sys_enabled(RISCVVirtState *s)
 static void lynx_get_iommu_sys(Object *obj, Visitor *v, const char *name,
                                void *opaque, Error **errp)
 {
-    RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
+    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
     OnOffAuto iommu_sys = s->iommu_sys;
 
     visit_type_OnOffAuto(v, name, &iommu_sys, errp);
@@ -871,7 +871,7 @@ static void lynx_get_iommu_sys(Object *obj, Visitor *v, const char *name,
 static void lynx_set_iommu_sys(Object *obj, Visitor *v, const char *name,
                                void *opaque, Error **errp)
 {
-    RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
+    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
 
     visit_type_OnOffAuto(v, name, &s->iommu_sys, errp);
 }
@@ -884,7 +884,7 @@ bool lynx_is_acpi_enabled(RISCVVirtState *s)
 static void lynx_get_acpi(Object *obj, Visitor *v, const char *name,
                           void *opaque, Error **errp)
 {
-    RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
+    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
     OnOffAuto acpi = s->acpi;
 
     visit_type_OnOffAuto(v, name, &acpi, errp);
@@ -893,7 +893,7 @@ static void lynx_get_acpi(Object *obj, Visitor *v, const char *name,
 static void lynx_set_acpi(Object *obj, Visitor *v, const char *name,
                           void *opaque, Error **errp)
 {
-    RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
+    RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
 
     visit_type_OnOffAuto(v, name, &s->acpi, errp);
 }
@@ -902,7 +902,7 @@ static HotplugHandler *lynx_machine_get_hotplug_handler(MachineState *machine,
                                                         DeviceState *dev)
 {
     MachineClass *mc = MACHINE_GET_CLASS(machine);
-    RISCVVirtState *s = RISCV_VIRT_MACHINE(machine);
+    RISCVVirtState *s = RISCV_LYNX_MACHINE(machine);
 
     if (device_is_dynamic_sysbus(mc, dev) ||
         object_dynamic_cast(OBJECT(dev), TYPE_VIRTIO_IOMMU_PCI) ||
@@ -917,7 +917,7 @@ static HotplugHandler *lynx_machine_get_hotplug_handler(MachineState *machine,
 static void lynx_machine_device_plug_cb(HotplugHandler *hotplug_dev,
                                         DeviceState *dev, Error **errp)
 {
-    RISCVVirtState *s = RISCV_VIRT_MACHINE(hotplug_dev);
+    RISCVVirtState *s = RISCV_LYNX_MACHINE(hotplug_dev);
 
     if (s->platform_bus_dev) {
         MachineClass *mc = MACHINE_GET_CLASS(s);
