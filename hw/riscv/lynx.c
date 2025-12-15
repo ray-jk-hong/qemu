@@ -64,7 +64,7 @@
 /* KVM AIA only supports APLIC MSI. APLIC Wired is always emulated by QEMU. */
 static bool virt_use_kvm_aia_aplic_imsic(RISCVVirtAIAType aia_type)
 {
-    bool msimode = aia_type == VIRT_AIA_TYPE_APLIC_IMSIC;
+    bool msimode = aia_type == LYNX_AIA_TYPE_APLIC_IMSIC;
 
     return riscv_is_kvm_aia_aplic_imsic(msimode);
 }
@@ -347,7 +347,7 @@ static DeviceState *lynx_create_aia(RISCVVirtAIAType aia_type, int aia_guests,
     uint32_t guest_bits;
     DeviceState *aplic_s = NULL;
     DeviceState *aplic_m = NULL;
-    bool msimode = aia_type == VIRT_AIA_TYPE_APLIC_IMSIC;
+    bool msimode = aia_type == LYNX_AIA_TYPE_APLIC_IMSIC;
 
     if (msimode) {
         if (!kvm_enabled()) {
@@ -609,7 +609,7 @@ static void lynx_machine_init(MachineState *machine)
         sysbus_realize(SYS_BUS_DEVICE(&s->soc[i]), &error_fatal);
 
         if (virt_aclint_allowed() && s->have_aclint) {
-            if (s->aia_type == VIRT_AIA_TYPE_APLIC_IMSIC) {
+            if (s->aia_type == LYNX_AIA_TYPE_APLIC_IMSIC) {
                 /* Per-socket ACLINT MTIMER */
                 riscv_aclint_mtimer_create(s->memmap[LYNX_CLINT].base +
                             i * RISCV_ACLINT_DEFAULT_MTIMER_SIZE,
@@ -648,7 +648,7 @@ static void lynx_machine_init(MachineState *machine)
         }
 
         /* Per-socket interrupt controller */
-        if (s->aia_type == VIRT_AIA_TYPE_NONE) {
+        if (s->aia_type == LYNX_AIA_TYPE_NONE) {
             s->irqchip[i] = lynx_create_plic(s->memmap, i,
                                              base_hartid, hart_count);
         } else {
@@ -809,10 +809,10 @@ static char *lynx_get_aia(Object *obj, Error **errp)
     const char *val;
 
     switch (s->aia_type) {
-    case VIRT_AIA_TYPE_APLIC:
+    case LYNX_AIA_TYPE_APLIC:
         val = "aplic";
         break;
-    case VIRT_AIA_TYPE_APLIC_IMSIC:
+    case LYNX_AIA_TYPE_APLIC_IMSIC:
         val = "aplic-imsic";
         break;
     default:
@@ -828,11 +828,11 @@ static void lynx_set_aia(Object *obj, const char *val, Error **errp)
     RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
 
     if (!strcmp(val, "none")) {
-        s->aia_type = VIRT_AIA_TYPE_NONE;
+        s->aia_type = LYNX_AIA_TYPE_NONE;
     } else if (!strcmp(val, "aplic")) {
-        s->aia_type = VIRT_AIA_TYPE_APLIC;
+        s->aia_type = LYNX_AIA_TYPE_APLIC;
     } else if (!strcmp(val, "aplic-imsic")) {
-        s->aia_type = VIRT_AIA_TYPE_APLIC_IMSIC;
+        s->aia_type = LYNX_AIA_TYPE_APLIC_IMSIC;
     } else {
         error_setg(errp, "Invalid AIA interrupt controller type");
         error_append_hint(errp, "Valid values are none, aplic, and "

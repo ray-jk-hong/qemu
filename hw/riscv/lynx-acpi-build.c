@@ -88,13 +88,13 @@ static void riscv_acpi_madt_add_rintc(uint32_t uid,
     build_append_int_noprefix(entry, hart_id, 8);    /* Hart ID  */
     build_append_int_noprefix(entry, uid, 4);        /* ACPI Processor UID */
     /* External Interrupt Controller ID */
-    if (s->aia_type == VIRT_AIA_TYPE_APLIC) {
+    if (s->aia_type == LYNX_AIA_TYPE_APLIC) {
         build_append_int_noprefix(entry,
                                   ACPI_BUILD_INTC_ID(
                                       arch_ids->cpus[uid].props.node_id,
                                       local_cpu_id),
                                   4);
-    } else if (s->aia_type == VIRT_AIA_TYPE_NONE) {
+    } else if (s->aia_type == LYNX_AIA_TYPE_NONE) {
         build_append_int_noprefix(entry,
                                   ACPI_BUILD_INTC_ID(
                                       arch_ids->cpus[uid].props.node_id,
@@ -104,7 +104,7 @@ static void riscv_acpi_madt_add_rintc(uint32_t uid,
         build_append_int_noprefix(entry, 0, 4);
     }
 
-    if (s->aia_type == VIRT_AIA_TYPE_APLIC_IMSIC) {
+    if (s->aia_type == LYNX_AIA_TYPE_APLIC_IMSIC) {
         /* IMSIC Base address */
         build_append_int_noprefix(entry, imsic_addr, 8);
         /* IMSIC Size */
@@ -466,7 +466,7 @@ static void build_dsdt(GArray *table_data,
 
     socket_count = riscv_socket_count(ms);
 
-    if (s->aia_type == VIRT_AIA_TYPE_NONE) {
+    if (s->aia_type == LYNX_AIA_TYPE_NONE) {
         acpi_dsdt_add_plic_aplic(scope, socket_count, memmap[LYNX_PLIC].base,
                                  memmap[LYNX_PLIC].size, "RSCV0001");
     } else {
@@ -548,7 +548,7 @@ static void build_madt(GArray *table_data,
     }
 
     /* IMSIC */
-    if (s->aia_type == VIRT_AIA_TYPE_APLIC_IMSIC) {
+    if (s->aia_type == LYNX_AIA_TYPE_APLIC_IMSIC) {
         /* IMSIC */
         build_append_int_noprefix(table_data, 0x19, 1);     /* Type */
         build_append_int_noprefix(table_data, 16, 1);       /* Length */
@@ -569,7 +569,7 @@ static void build_madt(GArray *table_data,
         build_append_int_noprefix(table_data, IMSIC_MMIO_GROUP_MIN_SHIFT, 1);
     }
 
-    if (s->aia_type != VIRT_AIA_TYPE_NONE) {
+    if (s->aia_type != LYNX_AIA_TYPE_NONE) {
         /* APLICs */
         for (socket = 0; socket < riscv_socket_count(ms); socket++) {
             aplic_addr = s->memmap[LYNX_APLIC_S].base +
@@ -582,7 +582,7 @@ static void build_madt(GArray *table_data,
             build_append_int_noprefix(table_data, 0, 4);       /* Flags */
             build_append_int_noprefix(table_data, 0, 8);       /* Hardware ID */
             /* Number of IDCs */
-            if (s->aia_type == VIRT_AIA_TYPE_APLIC) {
+            if (s->aia_type == LYNX_AIA_TYPE_APLIC) {
                 build_append_int_noprefix(table_data,
                                           s->soc[socket].num_harts,
                                           2);
