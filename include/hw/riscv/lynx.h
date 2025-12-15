@@ -35,11 +35,11 @@ typedef struct RISCVLynxState RISCVLynxState;
 DECLARE_INSTANCE_CHECKER(RISCVLynxState, RISCV_LYNX_MACHINE,
                          TYPE_RISCV_LYNX_MACHINE)
 
-typedef enum RISCVVirtAIAType {
+typedef enum RISCVLynxAIAType {
     LYNX_AIA_TYPE_NONE = 0,
     LYNX_AIA_TYPE_APLIC,
     LYNX_AIA_TYPE_APLIC_IMSIC,
-} RISCVVirtAIAType;
+} RISCVLynxAIAType;
 
 struct RISCVLynxState {
     /*< private >*/
@@ -55,7 +55,7 @@ struct RISCVLynxState {
 
     int fdt_size;
     bool have_aclint;
-    RISCVVirtAIAType aia_type;
+    RISCVLynxAIAType aia_type;
     int aia_guests;
     char *oem_id;
     char *oem_table_id;
@@ -117,20 +117,23 @@ enum {
 #define LYNX_PLIC_SIZE(__num_context) \
     (LYNX_PLIC_CONTEXT_BASE + (__num_context) * LYNX_PLIC_CONTEXT_STRIDE)
 
-#define FDT_PCI_ADDR_CELLS    3
-#define FDT_PCI_INT_CELLS     1
-#define FDT_PLIC_ADDR_CELLS   0
-#define FDT_PLIC_INT_CELLS    1
-#define FDT_APLIC_INT_CELLS   2
-#define FDT_APLIC_ADDR_CELLS  0
-#define FDT_IMSIC_INT_CELLS   0
-#define FDT_MAX_INT_CELLS     2
-#define FDT_MAX_INT_MAP_WIDTH (FDT_PCI_ADDR_CELLS + FDT_PCI_INT_CELLS + \
-                                 1 + FDT_MAX_INT_CELLS)
-#define FDT_PLIC_INT_MAP_WIDTH  (FDT_PCI_ADDR_CELLS + FDT_PCI_INT_CELLS + \
-                                 1 + FDT_PLIC_INT_CELLS)
-#define FDT_APLIC_INT_MAP_WIDTH (FDT_PCI_ADDR_CELLS + FDT_PCI_INT_CELLS + \
-                                 1 + FDT_APLIC_INT_CELLS)
+#define LYNX_FDT_PCI_ADDR_CELLS    3
+#define LYNX_FDT_PCI_INT_CELLS     1
+#define LYNX_FDT_PLIC_ADDR_CELLS   0
+#define LYNX_FDT_PLIC_INT_CELLS    1
+#define LYNX_FDT_APLIC_INT_CELLS   2
+#define LYNX_FDT_APLIC_ADDR_CELLS  0
+#define LYNX_FDT_IMSIC_INT_CELLS   0
+#define LYNX_FDT_MAX_INT_CELLS     2
+#define LYNX_FDT_MAX_INT_MAP_WIDTH (LYNX_FDT_PCI_ADDR_CELLS + \
+                                LYNX_FDT_PCI_INT_CELLS + \
+                                 1 + LYNX_FDT_MAX_INT_CELLS)
+#define LYNX_FDT_PLIC_INT_MAP_WIDTH  (LYNX_FDT_PCI_ADDR_CELLS + \
+                                    LYNX_FDT_PCI_INT_CELLS + \
+                                        1 + LYNX_FDT_PLIC_INT_CELLS)
+#define LYNX_FDT_APLIC_INT_MAP_WIDTH (LYNX_FDT_PCI_ADDR_CELLS + \
+                                LYNX_FDT_PCI_INT_CELLS + \
+                                 1 + LYNX_FDT_APLIC_INT_CELLS)
 
 bool lynx_is_acpi_enabled(RISCVLynxState *s);
 bool lynx_is_iommu_sys_enabled(RISCVLynxState *s);

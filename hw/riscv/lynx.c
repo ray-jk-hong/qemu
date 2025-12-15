@@ -62,7 +62,7 @@
 #define LYNX_SERIAL_REG_SHIFT 2
 
 /* KVM AIA only supports APLIC MSI. APLIC Wired is always emulated by QEMU. */
-static bool lynx_use_kvm_aia_aplic_imsic(RISCVVirtAIAType aia_type)
+static bool lynx_use_kvm_aia_aplic_imsic(RISCVLynxAIAType aia_type)
 {
     bool msimode = aia_type == LYNX_AIA_TYPE_APLIC_IMSIC;
 
@@ -338,7 +338,7 @@ static DeviceState *lynx_create_plic(const MemMapEntry *memmap, int socket,
              memmap[LYNX_PLIC].size);
 }
 
-static DeviceState *lynx_create_aia(RISCVVirtAIAType aia_type, int aia_guests,
+static DeviceState *lynx_create_aia(RISCVLynxAIAType aia_type, int aia_guests,
                                     const MemMapEntry *memmap, int socket,
                                     int base_hartid, int hart_count)
 {
