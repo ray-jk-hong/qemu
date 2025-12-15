@@ -722,7 +722,7 @@ static void lynx_machine_init(MachineState *machine)
     for (i = 0; i < VIRTIO_COUNT; i++) {
         sysbus_create_simple("virtio-mmio",
             s->memmap[LYNX_VIRTIO].base + i * s->memmap[LYNX_VIRTIO].size,
-            qdev_get_gpio_in(virtio_irqchip, VIRTIO_IRQ + i));
+            qdev_get_gpio_in(virtio_irqchip, LYNX_VIRTIO_IRQ + i));
     }
 
     lynx_gpex_pcie_init(system_memory, pcie_irqchip, s);
