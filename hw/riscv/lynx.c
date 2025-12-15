@@ -59,6 +59,8 @@
 #include "hw/virtio/virtio-iommu.h"
 #include "hw/uefi/var-service-api.h"
 
+#define LYNX_SERIAL_REG_SHIFT 2
+
 /* KVM AIA only supports APLIC MSI. APLIC Wired is always emulated by QEMU. */
 static bool virt_use_kvm_aia_aplic_imsic(RISCVVirtAIAType aia_type)
 {
@@ -79,7 +81,7 @@ static bool virt_aclint_allowed(void)
     return tcg_enabled() || qtest_enabled();
 }
 
-static const MemMapEntry virt_memmap[] = {
+static const MemMapEntry lynx_memmap[] = {
     [VIRT_DEBUG] =        {        0x0,         0x100 },
     [VIRT_MROM] =         {     0x1000,        0xf000 },
     [VIRT_TEST] =         {   0x100000,        0x1000 },
@@ -114,7 +116,7 @@ static MemMapEntry virt_high_pcie_memmap;
 
 #define VIRT_FLASH_SECTOR_SIZE (256 * KiB)
 
-static PFlashCFI01 *virt_flash_create1(RISCVVirtState *s,
+static PFlashCFI01 *lynx_flash_create1(RISCVVirtState *s,
                                        const char *name,
                                        const char *alias_prop_name)
 {
@@ -143,11 +145,11 @@ static PFlashCFI01 *virt_flash_create1(RISCVVirtState *s,
 
 static void virt_flash_create(RISCVVirtState *s)
 {
-    s->flash[0] = virt_flash_create1(s, "virt.flash0", "pflash0");
-    s->flash[1] = virt_flash_create1(s, "virt.flash1", "pflash1");
+    s->flash[0] = lynx_flash_create1(s, "virt.flash0", "pflash0");
+    s->flash[1] = lynx_flash_create1(s, "virt.flash1", "pflash1");
 }
 
-static void virt_flash_map1(PFlashCFI01 *flash,
+static void lynx_flash_map1(PFlashCFI01 *flash,
                             hwaddr base, hwaddr size,
                             MemoryRegion *sysmem)
 {
@@ -169,9 +171,9 @@ static void virt_flash_map(RISCVVirtState *s,
     hwaddr flashsize = s->memmap[VIRT_FLASH].size / 2;
     hwaddr flashbase = s->memmap[VIRT_FLASH].base;
 
-    virt_flash_map1(s->flash[0], flashbase, flashsize,
+    lynx_flash_map1(s->flash[0], flashbase, flashsize,
                     sysmem);
-    virt_flash_map1(s->flash[1], flashbase + flashsize, flashsize,
+    lynx_flash_map1(s->flash[1], flashbase + flashsize, flashsize,
                     sysmem);
 }
 
@@ -727,17 +729,6 @@ static void create_fdt_socket_aplic(RISCVVirtState *s,
     aplic_phandles[socket] = aplic_s_phandle;
 }
 
-static void create_fdt_pmu(RISCVVirtState *s)
-{
-    g_autofree char *pmu_name = g_strdup_printf("/pmu");
-    MachineState *ms = MACHINE(s);
-    RISCVCPU hart = s->soc[0].harts[0];
-
-    qemu_fdt_add_subnode(ms->fdt, pmu_name);
-    qemu_fdt_setprop_string(ms->fdt, pmu_name, "compatible", "riscv,pmu");
-    riscv_pmu_generate_fdt_node(ms->fdt, hart.pmu_avail_ctrs, pmu_name);
-}
-
 static void create_fdt_sockets(RISCVVirtState *s,
                                uint32_t *phandle,
                                uint32_t *irq_mmio_phandle,
@@ -1004,36 +995,6 @@ static void create_fdt_rtc(RISCVVirtState *s,
     }
 }
 
-static void create_fdt_flash(RISCVVirtState *s)
-{
-    MachineState *ms = MACHINE(s);
-    hwaddr flashsize = s->memmap[VIRT_FLASH].size / 2;
-    hwaddr flashbase = s->memmap[VIRT_FLASH].base;
-    g_autofree char *name = g_strdup_printf("/flash@%" PRIx64, flashbase);
-
-    qemu_fdt_add_subnode(ms->fdt, name);
-    qemu_fdt_setprop_string(ms->fdt, name, "compatible", "cfi-flash");
-    qemu_fdt_setprop_sized_cells(ms->fdt, name, "reg",
-                                 2, flashbase, 2, flashsize,
-                                 2, flashbase + flashsize, 2, flashsize);
-    qemu_fdt_setprop_cell(ms->fdt, name, "bank-width", 4);
-}
-
-static void create_fdt_fw_cfg(RISCVVirtState *s)
-{
-    MachineState *ms = MACHINE(s);
-    hwaddr base = s->memmap[VIRT_FW_CFG].base;
-    hwaddr size = s->memmap[VIRT_FW_CFG].size;
-    g_autofree char *nodename = g_strdup_printf("/fw-cfg@%" PRIx64, base);
-
-    qemu_fdt_add_subnode(ms->fdt, nodename);
-    qemu_fdt_setprop_string(ms->fdt, nodename,
-                            "compatible", "qemu,fw-cfg-mmio");
-    qemu_fdt_setprop_sized_cells(ms->fdt, nodename, "reg",
-                                 2, base, 2, size);
-    qemu_fdt_setprop(ms->fdt, nodename, "dma-coherent", NULL, 0);
-}
-
 static void create_fdt_virtio_iommu(RISCVVirtState *s, uint16_t bdf)
 {
     const char compat[] = "virtio,pci-iommu\0pci1af4,1057";
@@ -1151,51 +1112,6 @@ static void finalize_fdt(RISCVVirtState *s)
     create_fdt_uart(s, irq_mmio_phandle);
 
     create_fdt_rtc(s, irq_mmio_phandle);
-}
-
-static void create_fdt(RISCVVirtState *s)
-{
-    MachineState *ms = MACHINE(s);
-    uint8_t rng_seed[32];
-    g_autofree char *name = NULL;
-
-    ms->fdt = create_device_tree(&s->fdt_size);
-    if (!ms->fdt) {
-        error_report("create_device_tree() failed");
-        exit(1);
-    }
-
-    qemu_fdt_setprop_string(ms->fdt, "/", "model", "riscv-virtio,qemu");
-    qemu_fdt_setprop_string(ms->fdt, "/", "compatible", "riscv-virtio");
-    qemu_fdt_setprop_cell(ms->fdt, "/", "#size-cells", 0x2);
-    qemu_fdt_setprop_cell(ms->fdt, "/", "#address-cells", 0x2);
-
-    qemu_fdt_add_subnode(ms->fdt, "/soc");
-    qemu_fdt_setprop(ms->fdt, "/soc", "ranges", NULL, 0);
-    qemu_fdt_setprop_string(ms->fdt, "/soc", "compatible", "simple-bus");
-    qemu_fdt_setprop_cell(ms->fdt, "/soc", "#size-cells", 0x2);
-    qemu_fdt_setprop_cell(ms->fdt, "/soc", "#address-cells", 0x2);
-
-    /*
-     * The "/soc/pci@..." node is needed for PCIE hotplugs
-     * that might happen before finalize_fdt().
-     */
-    name = g_strdup_printf("/soc/pci@%"HWADDR_PRIx,
-                           s->memmap[VIRT_PCIE_ECAM].base);
-    qemu_fdt_add_subnode(ms->fdt, name);
-
-    qemu_fdt_add_subnode(ms->fdt, "/chosen");
-
-    /* Pass seed to RNG */
-    qemu_guest_getrandom_nofail(rng_seed, sizeof(rng_seed));
-    qemu_fdt_setprop(ms->fdt, "/chosen", "rng-seed",
-                     rng_seed, sizeof(rng_seed));
-
-    qemu_fdt_add_subnode(ms->fdt, "/aliases");
-
-    create_fdt_flash(s);
-    create_fdt_fw_cfg(s);
-    create_fdt_pmu(s);
 }
 
 static inline DeviceState *gpex_pcie_init(MemoryRegion *sys_mem,
@@ -1534,7 +1450,7 @@ static void virt_machine_init(MachineState *machine)
     int i, base_hartid, hart_count;
     int socket_count = riscv_socket_count(machine);
 
-    s->memmap = virt_memmap;
+    s->memmap = lynx_memmap;
 
     /* Check socket count limit */
     if (VIRT_SOCKETS_MAX < socket_count) {
@@ -1702,8 +1618,8 @@ static void virt_machine_init(MachineState *machine)
     create_platform_bus(s, mmio_irqchip);
 
     serial_mm_init(system_memory, s->memmap[VIRT_UART0].base,
-        2, qdev_get_gpio_in(mmio_irqchip, UART0_IRQ), 399193,
-        serial_hd(0), DEVICE_LITTLE_ENDIAN);
+        LYNX_SERIAL_REG_SHIFT, qdev_get_gpio_in(mmio_irqchip, UART0_IRQ), 
+        399193, serial_hd(0), DEVICE_LITTLE_ENDIAN);
 
     sysbus_create_simple("goldfish_rtc", s->memmap[VIRT_RTC].base,
         qdev_get_gpio_in(mmio_irqchip, RTC_IRQ));
@@ -1722,9 +1638,7 @@ static void virt_machine_init(MachineState *machine)
             error_report("load_device_tree() failed");
             exit(1);
         }
-    } else {
-        create_fdt(s);
-    }
+    } 
 
     if (lynx_is_iommu_sys_enabled(s)) {
         DeviceState *iommu_sys = qdev_new(TYPE_RISCV_IOMMU_SYS);
@@ -1833,7 +1747,7 @@ bool lynx_is_iommu_sys_enabled(RISCVVirtState *s)
     return s->iommu_sys == ON_OFF_AUTO_ON;
 }
 
-static void virt_get_iommu_sys(Object *obj, Visitor *v, const char *name,
+static void lynx_get_iommu_sys(Object *obj, Visitor *v, const char *name,
                                void *opaque, Error **errp)
 {
     RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
@@ -1888,7 +1802,7 @@ static HotplugHandler *virt_machine_get_hotplug_handler(MachineState *machine,
     return NULL;
 }
 
-static void virt_machine_device_plug_cb(HotplugHandler *hotplug_dev,
+static void lynx_machine_device_plug_cb(HotplugHandler *hotplug_dev,
                                         DeviceState *dev, Error **errp)
 {
     RISCVVirtState *s = RISCV_VIRT_MACHINE(hotplug_dev);
@@ -1934,7 +1848,7 @@ static void lynx_machine_class_init(ObjectClass *oc, const void *data)
     assert(!mc->get_hotplug_handler);
     mc->get_hotplug_handler = virt_machine_get_hotplug_handler;
 
-    hc->plug = virt_machine_device_plug_cb;
+    hc->plug = lynx_machine_device_plug_cb;
 
     machine_class_allow_dynamic_sysbus_dev(mc, TYPE_RAMFB_DEVICE);
     machine_class_allow_dynamic_sysbus_dev(mc, TYPE_UEFI_VARS_SYSBUS);
@@ -1974,7 +1888,7 @@ static void lynx_machine_class_init(ObjectClass *oc, const void *data)
                                           "Enable ACPI");
 
     object_class_property_add(oc, "iommu-sys", "OnOffAuto",
-                              virt_get_iommu_sys, virt_set_iommu_sys,
+                              lynx_get_iommu_sys, virt_set_iommu_sys,
                               NULL, NULL);
     object_class_property_set_description(oc, "iommu-sys",
                                           "Enable IOMMU platform device");
