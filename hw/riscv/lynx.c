@@ -84,9 +84,9 @@ static const MemMapEntry lynx_memmap[] = {
     [VIRT_PCIE_PIO] =     {  0x3000000,       0x10000 },
     [VIRT_IOMMU_SYS] =    {  0x3010000,        0x1000 },
     [VIRT_PLATFORM_BUS] = {  0x4000000,     0x2000000 },
-    [VIRT_PLIC] =         {  0xc000000, VIRT_PLIC_SIZE(VIRT_CPUS_MAX * 2) },
-    [VIRT_APLIC_M] =      {  0xc000000, APLIC_SIZE(VIRT_CPUS_MAX) },
-    [VIRT_APLIC_S] =      {  0xd000000, APLIC_SIZE(VIRT_CPUS_MAX) },
+    [VIRT_PLIC] =         {  0xc000000, VIRT_PLIC_SIZE(LYNX_CPUS_MAX * 2) },
+    [VIRT_APLIC_M] =      {  0xc000000, APLIC_SIZE(LYNX_CPUS_MAX) },
+    [VIRT_APLIC_S] =      {  0xd000000, APLIC_SIZE(LYNX_CPUS_MAX) },
     [VIRT_UART0] =        { 0x10000000,         0x100 },
     [VIRT_VIRTIO] =       { 0x10001000,        0x1000 },
     [VIRT_FW_CFG] =       { 0x10100000,          0x18 },
@@ -136,7 +136,7 @@ static PFlashCFI01 *lynx_flash_create1(RISCVVirtState *s,
     return PFLASH_CFI01(dev);
 }
 
-static void virt_flash_create(RISCVVirtState *s)
+static void lynx_flash_create(RISCVVirtState *s)
 {
     s->flash[0] = lynx_flash_create1(s, "virt.flash0", "pflash0");
     s->flash[1] = lynx_flash_create1(s, "virt.flash1", "pflash1");
@@ -158,7 +158,7 @@ static void lynx_flash_map1(PFlashCFI01 *flash,
                                                        0));
 }
 
-static void virt_flash_map(RISCVVirtState *s,
+static void lynx_flash_map(RISCVVirtState *s,
                            MemoryRegion *sysmem)
 {
     hwaddr flashsize = s->memmap[VIRT_FLASH].size / 2;
@@ -181,7 +181,7 @@ uint32_t lynx_imsic_num_bits(uint32_t count)
     return ret;
 }
 
-static void create_fdt_virtio_iommu(RISCVVirtState *s, uint16_t bdf)
+static void lynx_create_fdt_virtio_iommu(RISCVVirtState *s, uint16_t bdf)
 {
     const char compat[] = "virtio,pci-iommu\0pci1af4,1057";
     void *fdt = MACHINE(s)->fdt;
@@ -209,7 +209,7 @@ static void create_fdt_virtio_iommu(RISCVVirtState *s, uint16_t bdf)
                            bdf + 1, iommu_phandle, bdf + 1, 0xffff - bdf);
 }
 
-static void create_fdt_iommu(RISCVVirtState *s, uint16_t bdf)
+static void lynx_create_fdt_iommu(RISCVVirtState *s, uint16_t bdf)
 {
     const char comp[] = "riscv,pci-iommu";
     void *fdt = MACHINE(s)->fdt;
@@ -234,7 +234,7 @@ static void create_fdt_iommu(RISCVVirtState *s, uint16_t bdf)
     s->pci_iommu_bdf = bdf;
 }
 
-static inline DeviceState *gpex_pcie_init(MemoryRegion *sys_mem,
+static inline DeviceState *lynx_gpex_pcie_init(MemoryRegion *sys_mem,
                                           DeviceState *irqchip,
                                           RISCVVirtState *s)
 {
@@ -306,7 +306,7 @@ static inline DeviceState *gpex_pcie_init(MemoryRegion *sys_mem,
     return dev;
 }
 
-static FWCfgState *create_fw_cfg(const MachineState *ms, hwaddr base)
+static FWCfgState *lynx_create_fw_cfg(const MachineState *ms, hwaddr base)
 {
     FWCfgState *fw_cfg;
 
@@ -317,7 +317,7 @@ static FWCfgState *create_fw_cfg(const MachineState *ms, hwaddr base)
     return fw_cfg;
 }
 
-static DeviceState *virt_create_plic(const MemMapEntry *memmap, int socket,
+static DeviceState *lynx_create_plic(const MemMapEntry *memmap, int socket,
                                      int base_hartid, int hart_count)
 {
     g_autofree char *plic_hart_config = NULL;
@@ -338,7 +338,7 @@ static DeviceState *virt_create_plic(const MemMapEntry *memmap, int socket,
              memmap[VIRT_PLIC].size);
 }
 
-static DeviceState *virt_create_aia(RISCVVirtAIAType aia_type, int aia_guests,
+static DeviceState *lynx_create_aia(RISCVVirtAIAType aia_type, int aia_guests,
                                     const MemMapEntry *memmap, int socket,
                                     int base_hartid, int hart_count)
 {
@@ -464,7 +464,7 @@ static void lynx_build_smbios(RISCVVirtState *s)
     }
 }
 
-static void virt_machine_done(Notifier *notifier, void *data)
+static void lynx_machine_done(Notifier *notifier, void *data)
 {
     RISCVVirtState *s = container_of(notifier, RISCVVirtState,
                                      machine_done);
@@ -553,7 +553,7 @@ static void virt_machine_done(Notifier *notifier, void *data)
     }
 }
 
-static void virt_machine_init(MachineState *machine)
+static void lynx_machine_init(MachineState *machine)
 {
     RISCVVirtState *s = RISCV_VIRT_MACHINE(machine);
     MemoryRegion *system_memory = get_system_memory();
@@ -565,9 +565,9 @@ static void virt_machine_init(MachineState *machine)
     s->memmap = lynx_memmap;
 
     /* Check socket count limit */
-    if (VIRT_SOCKETS_MAX < socket_count) {
+    if (LYNX_SOCKETS_MAX < socket_count) {
         error_report("number of sockets/nodes should be less than %d",
-            VIRT_SOCKETS_MAX);
+            LYNX_SOCKETS_MAX);
         exit(1);
     }
 
@@ -649,10 +649,10 @@ static void virt_machine_init(MachineState *machine)
 
         /* Per-socket interrupt controller */
         if (s->aia_type == VIRT_AIA_TYPE_NONE) {
-            s->irqchip[i] = virt_create_plic(s->memmap, i,
+            s->irqchip[i] = lynx_create_plic(s->memmap, i,
                                              base_hartid, hart_count);
         } else {
-            s->irqchip[i] = virt_create_aia(s->aia_type, s->aia_guests,
+            s->irqchip[i] = lynx_create_aia(s->aia_type, s->aia_guests,
                                             s->memmap, i, base_hartid,
                                             hart_count);
         }
@@ -712,7 +712,7 @@ static void virt_machine_init(MachineState *machine)
      * Init fw_cfg. Must be done before riscv_load_fdt, otherwise the
      * device tree cannot be altered and we get FDT_ERR_NOSPACE.
      */
-    s->fw_cfg = create_fw_cfg(machine, s->memmap[VIRT_FW_CFG].base);
+    s->fw_cfg = lynx_create_fw_cfg(machine, s->memmap[VIRT_FW_CFG].base);
     rom_set_fw(s->fw_cfg);
 
     /* SiFive Test MMIO device */
@@ -725,7 +725,7 @@ static void virt_machine_init(MachineState *machine)
             qdev_get_gpio_in(virtio_irqchip, VIRTIO_IRQ + i));
     }
 
-    gpex_pcie_init(system_memory, pcie_irqchip, s);
+    lynx_gpex_pcie_init(system_memory, pcie_irqchip, s);
 
     create_platform_bus(s, mmio_irqchip);
 
@@ -741,7 +741,7 @@ static void virt_machine_init(MachineState *machine)
         pflash_cfi01_legacy_drive(s->flash[i],
                                   drive_get(IF_PFLASH, 0, i));
     }
-    virt_flash_map(s, system_memory);
+    lynx_flash_map(s, system_memory);
 
     /* load/create device tree */
     if (machine->dtb) {
@@ -768,7 +768,7 @@ static void virt_machine_init(MachineState *machine)
         sysbus_realize_and_unref(SYS_BUS_DEVICE(iommu_sys), &error_fatal);
     }
 
-    s->machine_done.notify = virt_machine_done;
+    s->machine_done.notify = lynx_machine_done;
     qemu_add_machine_init_done_notifier(&s->machine_done);
 }
 
@@ -776,7 +776,7 @@ static void lynx_machine_instance_init(Object *obj)
 {
     RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
 
-    virt_flash_create(s);
+    lynx_flash_create(s);
 
     s->oem_id = g_strndup(ACPI_BUILD_APPNAME6, 6);
     s->oem_table_id = g_strndup(ACPI_BUILD_APPNAME8, 8);
@@ -803,7 +803,7 @@ static void lynx_set_aia_guests(Object *obj, const char *val, Error **errp)
     }
 }
 
-static char *virt_get_aia(Object *obj, Error **errp)
+static char *lynx_get_aia(Object *obj, Error **errp)
 {
     RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
     const char *val;
@@ -847,7 +847,7 @@ static bool virt_get_aclint(Object *obj, Error **errp)
     return s->have_aclint;
 }
 
-static void virt_set_aclint(Object *obj, bool value, Error **errp)
+static void lynx_set_aclint(Object *obj, bool value, Error **errp)
 {
     RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
 
@@ -868,7 +868,7 @@ static void lynx_get_iommu_sys(Object *obj, Visitor *v, const char *name,
     visit_type_OnOffAuto(v, name, &iommu_sys, errp);
 }
 
-static void virt_set_iommu_sys(Object *obj, Visitor *v, const char *name,
+static void lynx_set_iommu_sys(Object *obj, Visitor *v, const char *name,
                                void *opaque, Error **errp)
 {
     RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
@@ -881,7 +881,7 @@ bool lynx_is_acpi_enabled(RISCVVirtState *s)
     return s->acpi != ON_OFF_AUTO_OFF;
 }
 
-static void virt_get_acpi(Object *obj, Visitor *v, const char *name,
+static void lynx_get_acpi(Object *obj, Visitor *v, const char *name,
                           void *opaque, Error **errp)
 {
     RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
@@ -890,7 +890,7 @@ static void virt_get_acpi(Object *obj, Visitor *v, const char *name,
     visit_type_OnOffAuto(v, name, &acpi, errp);
 }
 
-static void virt_set_acpi(Object *obj, Visitor *v, const char *name,
+static void lynx_set_acpi(Object *obj, Visitor *v, const char *name,
                           void *opaque, Error **errp)
 {
     RISCVVirtState *s = RISCV_VIRT_MACHINE(obj);
@@ -898,7 +898,7 @@ static void virt_set_acpi(Object *obj, Visitor *v, const char *name,
     visit_type_OnOffAuto(v, name, &s->acpi, errp);
 }
 
-static HotplugHandler *virt_machine_get_hotplug_handler(MachineState *machine,
+static HotplugHandler *lynx_machine_get_hotplug_handler(MachineState *machine,
                                                         DeviceState *dev)
 {
     MachineClass *mc = MACHINE_GET_CLASS(machine);
@@ -929,11 +929,11 @@ static void lynx_machine_device_plug_cb(HotplugHandler *hotplug_dev,
     }
 
     if (object_dynamic_cast(OBJECT(dev), TYPE_VIRTIO_IOMMU_PCI)) {
-        create_fdt_virtio_iommu(s, pci_get_bdf(PCI_DEVICE(dev)));
+        lynx_create_fdt_virtio_iommu(s, pci_get_bdf(PCI_DEVICE(dev)));
     }
 
     if (object_dynamic_cast(OBJECT(dev), TYPE_RISCV_IOMMU_PCI)) {
-        create_fdt_iommu(s, pci_get_bdf(PCI_DEVICE(dev)));
+        lynx_create_fdt_iommu(s, pci_get_bdf(PCI_DEVICE(dev)));
         s->iommu_sys = ON_OFF_AUTO_OFF;
     }
 }
@@ -943,9 +943,9 @@ static void lynx_machine_class_init(ObjectClass *oc, const void *data)
     MachineClass *mc = MACHINE_CLASS(oc);
     HotplugHandlerClass *hc = HOTPLUG_HANDLER_CLASS(oc);
 
-    mc->desc = "RISC-V VirtIO board";
-    mc->init = virt_machine_init;
-    mc->max_cpus = VIRT_CPUS_MAX;
+    mc->desc = "RISC-V Lynx board";
+    mc->init = lynx_machine_init;
+    mc->max_cpus = LYNX_CPUS_MAX;
     mc->default_cpu_type = TYPE_RISCV_CPU_BASE;
     mc->block_default_type = IF_VIRTIO;
     mc->no_cdrom = 1;
@@ -958,7 +958,7 @@ static void lynx_machine_class_init(ObjectClass *oc, const void *data)
     mc->cpu_cluster_has_numa_boundary = true;
     mc->default_ram_id = "riscv_virt_board.ram";
     assert(!mc->get_hotplug_handler);
-    mc->get_hotplug_handler = virt_machine_get_hotplug_handler;
+    mc->get_hotplug_handler = lynx_machine_get_hotplug_handler;
 
     hc->plug = lynx_machine_device_plug_cb;
 
@@ -969,13 +969,13 @@ static void lynx_machine_class_init(ObjectClass *oc, const void *data)
 #endif
 
     object_class_property_add_bool(oc, "aclint", virt_get_aclint,
-                                   virt_set_aclint);
+                                   lynx_set_aclint);
     object_class_property_set_description(oc, "aclint",
                                           "(TCG only) Set on/off to "
                                           "enable/disable emulating "
                                           "ACLINT devices");
 
-    object_class_property_add_str(oc, "aia", virt_get_aia,
+    object_class_property_add_str(oc, "aia", lynx_get_aia,
                                   lynx_set_aia);
     object_class_property_set_description(oc, "aia",
                                           "Set type of AIA interrupt "
@@ -994,13 +994,13 @@ static void lynx_machine_class_init(ObjectClass *oc, const void *data)
     }
 
     object_class_property_add(oc, "acpi", "OnOffAuto",
-                              virt_get_acpi, virt_set_acpi,
+                              lynx_get_acpi, lynx_set_acpi,
                               NULL, NULL);
     object_class_property_set_description(oc, "acpi",
                                           "Enable ACPI");
 
     object_class_property_add(oc, "iommu-sys", "OnOffAuto",
-                              lynx_get_iommu_sys, virt_set_iommu_sys,
+                              lynx_get_iommu_sys, lynx_set_iommu_sys,
                               NULL, NULL);
     object_class_property_set_description(oc, "iommu-sys",
                                           "Enable IOMMU platform device");
