@@ -961,7 +961,7 @@ static void acpi_ram_update(MemoryRegion *mr, GArray *data)
     memory_region_set_dirty(mr, 0, size);
 }
 
-static void virt_acpi_build_update(void *build_opaque)
+static void lynx_acpi_build_update(void *build_opaque)
 {
     AcpiBuildState *build_state = build_opaque;
     AcpiBuildTables tables;
@@ -990,7 +990,7 @@ static void lynx_acpi_build_reset(void *build_opaque)
     build_state->patched = false;
 }
 
-static const VMStateDescription vmstate_virt_acpi_build = {
+static const VMStateDescription vmstate_lynx_acpi_build = {
     .name = "lynx_acpi_build",
     .version_id = 1,
     .minimum_version_id = 1,
@@ -1011,23 +1011,23 @@ void lynx_acpi_setup(RISCVLynxState *s)
     lynx_acpi_build(s, &tables);
 
     /* Now expose it all to Guest */
-    build_state->table_mr = acpi_add_rom_blob(virt_acpi_build_update,
+    build_state->table_mr = acpi_add_rom_blob(lynx_acpi_build_update,
                                               build_state, tables.table_data,
                                               ACPI_BUILD_TABLE_FILE);
     assert(build_state->table_mr != NULL);
 
-    build_state->linker_mr = acpi_add_rom_blob(virt_acpi_build_update,
+    build_state->linker_mr = acpi_add_rom_blob(lynx_acpi_build_update,
                                                build_state,
                                                tables.linker->cmd_blob,
                                                ACPI_BUILD_LOADER_FILE);
 
-    build_state->rsdp_mr = acpi_add_rom_blob(virt_acpi_build_update,
+    build_state->rsdp_mr = acpi_add_rom_blob(lynx_acpi_build_update,
                                              build_state, tables.rsdp,
                                              ACPI_BUILD_RSDP_FILE);
 
     qemu_register_reset(lynx_acpi_build_reset, build_state);
     lynx_acpi_build_reset(build_state);
-    vmstate_register(NULL, 0, &vmstate_virt_acpi_build, build_state);
+    vmstate_register(NULL, 0, &vmstate_lynx_acpi_build, build_state);
 
     /*
      * Clean up tables but don't free the memory: we track it

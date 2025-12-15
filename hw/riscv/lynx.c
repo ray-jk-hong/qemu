@@ -99,15 +99,15 @@ static const MemMapEntry lynx_memmap[] = {
 };
 
 /* PCIe high mmio is fixed for RV32 */
-#define VIRT32_HIGH_PCIE_MMIO_BASE  0x300000000ULL
-#define VIRT32_HIGH_PCIE_MMIO_SIZE  (4 * GiB)
+#define LYNX32_HIGH_PCIE_MMIO_BASE  0x300000000ULL
+#define LYNX32_HIGH_PCIE_MMIO_SIZE  (4 * GiB)
 
 /* PCIe high mmio for RV64, size is fixed but base depends on top of RAM */
-#define VIRT64_HIGH_PCIE_MMIO_SIZE  (16 * GiB)
+#define LYNX64_HIGH_PCIE_MMIO_SIZE  (16 * GiB)
 
-static MemMapEntry virt_high_pcie_memmap;
+static MemMapEntry lynx_high_pcie_memmap;
 
-#define VIRT_FLASH_SECTOR_SIZE (256 * KiB)
+#define LYNX_FLASH_SECTOR_SIZE (256 * KiB)
 
 static PFlashCFI01 *lynx_flash_create1(RISCVLynxState *s,
                                        const char *name,
@@ -119,7 +119,7 @@ static PFlashCFI01 *lynx_flash_create1(RISCVLynxState *s,
      */
     DeviceState *dev = qdev_new(TYPE_PFLASH_CFI01);
 
-    qdev_prop_set_uint64(dev, "sector-length", VIRT_FLASH_SECTOR_SIZE);
+    qdev_prop_set_uint64(dev, "sector-length", LYNX_FLASH_SECTOR_SIZE);
     qdev_prop_set_uint8(dev, "width", 4);
     qdev_prop_set_uint8(dev, "device-width", 2);
     qdev_prop_set_bit(dev, "big-endian", false);
@@ -148,9 +148,9 @@ static void lynx_flash_map1(PFlashCFI01 *flash,
 {
     DeviceState *dev = DEVICE(flash);
 
-    assert(QEMU_IS_ALIGNED(size, VIRT_FLASH_SECTOR_SIZE));
-    assert(size / VIRT_FLASH_SECTOR_SIZE <= UINT32_MAX);
-    qdev_prop_set_uint32(dev, "num-blocks", size / VIRT_FLASH_SECTOR_SIZE);
+    assert(QEMU_IS_ALIGNED(size, LYNX_FLASH_SECTOR_SIZE));
+    assert(size / LYNX_FLASH_SECTOR_SIZE <= UINT32_MAX);
+    qdev_prop_set_uint32(dev, "num-blocks", size / LYNX_FLASH_SECTOR_SIZE);
     sysbus_realize_and_unref(SYS_BUS_DEVICE(dev), &error_fatal);
 
     memory_region_add_subregion(sysmem, base,
@@ -245,8 +245,8 @@ static inline DeviceState *lynx_gpex_pcie_init(MemoryRegion *sys_mem,
     hwaddr ecam_size = s->memmap[LYNX_PCIE_ECAM].size;
     hwaddr mmio_base = s->memmap[LYNX_PCIE_MMIO].base;
     hwaddr mmio_size = s->memmap[LYNX_PCIE_MMIO].size;
-    hwaddr high_mmio_base = virt_high_pcie_memmap.base;
-    hwaddr high_mmio_size = virt_high_pcie_memmap.size;
+    hwaddr high_mmio_base = lynx_high_pcie_memmap.base;
+    hwaddr high_mmio_size = lynx_high_pcie_memmap.size;
     hwaddr pio_base = s->memmap[LYNX_PCIE_PIO].base;
     hwaddr pio_size = s->memmap[LYNX_PCIE_PIO].size;
     qemu_irq irq;
@@ -688,14 +688,14 @@ static void lynx_machine_init(MachineState *machine)
             error_report("Limiting RAM size to 10 GiB");
         }
 #endif
-        virt_high_pcie_memmap.base = VIRT32_HIGH_PCIE_MMIO_BASE;
-        virt_high_pcie_memmap.size = VIRT32_HIGH_PCIE_MMIO_SIZE;
+        lynx_high_pcie_memmap.base = LYNX32_HIGH_PCIE_MMIO_BASE;
+        lynx_high_pcie_memmap.size = LYNX32_HIGH_PCIE_MMIO_SIZE;
     } else {
-        virt_high_pcie_memmap.size = VIRT64_HIGH_PCIE_MMIO_SIZE;
-        virt_high_pcie_memmap.base = s->memmap[LYNX_DRAM].base +
+        lynx_high_pcie_memmap.size = LYNX64_HIGH_PCIE_MMIO_SIZE;
+        lynx_high_pcie_memmap.base = s->memmap[LYNX_DRAM].base +
                                      machine->ram_size;
-        virt_high_pcie_memmap.base =
-            ROUND_UP(virt_high_pcie_memmap.base, virt_high_pcie_memmap.size);
+        lynx_high_pcie_memmap.base =
+            ROUND_UP(lynx_high_pcie_memmap.base, lynx_high_pcie_memmap.size);
     }
 
     /* register system main memory (actual RAM) */
