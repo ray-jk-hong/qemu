@@ -719,7 +719,7 @@ static void lynx_machine_init(MachineState *machine)
     sifive_test_create(s->memmap[LYNX_TEST].base);
 
     /* VirtIO MMIO devices */
-    for (i = 0; i < VIRTIO_COUNT; i++) {
+    for (i = 0; i < LYNX_VIRTIO_COUNT; i++) {
         sysbus_create_simple("virtio-mmio",
             s->memmap[LYNX_VIRTIO].base + i * s->memmap[LYNX_VIRTIO].size,
             qdev_get_gpio_in(virtio_irqchip, LYNX_VIRTIO_IRQ + i));
