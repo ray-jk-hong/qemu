@@ -329,12 +329,12 @@ static DeviceState *lynx_create_plic(const MemMapEntry *memmap, int socket,
     return sifive_plic_create(
              memmap[LYNX_PLIC].base + socket * memmap[LYNX_PLIC].size,
              plic_hart_config, hart_count, base_hartid,
-             VIRT_IRQCHIP_NUM_SOURCES,
-             ((1U << VIRT_IRQCHIP_NUM_PRIO_BITS) - 1),
-             VIRT_PLIC_PRIORITY_BASE, VIRT_PLIC_PENDING_BASE,
-             VIRT_PLIC_ENABLE_BASE, VIRT_PLIC_ENABLE_STRIDE,
-             VIRT_PLIC_CONTEXT_BASE,
-             VIRT_PLIC_CONTEXT_STRIDE,
+             LYNX_IRQCHIP_NUM_SOURCES,
+             ((1U << LYNX_IRQCHIP_NUM_PRIO_BITS) - 1),
+             LYNX_PLIC_PRIORITY_BASE, LYNX_PLIC_PENDING_BASE,
+             LYNX_PLIC_ENABLE_BASE, LYNX_PLIC_ENABLE_STRIDE,
+             LYNX_PLIC_CONTEXT_BASE,
+             LYNX_PLIC_CONTEXT_STRIDE,
              memmap[LYNX_PLIC].size);
 }
 
@@ -357,7 +357,7 @@ static DeviceState *lynx_create_aia(RISCVVirtAIAType aia_type, int aia_guests,
             for (i = 0; i < hart_count; i++) {
                 riscv_imsic_create(addr + i * IMSIC_HART_SIZE(0),
                                    base_hartid + i, true, 1,
-                                   VIRT_IRQCHIP_NUM_MSIS);
+                                   LYNX_IRQCHIP_NUM_MSIS);
             }
         }
 
@@ -367,7 +367,7 @@ static DeviceState *lynx_create_aia(RISCVVirtAIAType aia_type, int aia_guests,
         for (i = 0; i < hart_count; i++) {
             riscv_imsic_create(addr + i * IMSIC_HART_SIZE(guest_bits),
                                base_hartid + i, false, 1 + aia_guests,
-                               VIRT_IRQCHIP_NUM_MSIS);
+                               LYNX_IRQCHIP_NUM_MSIS);
         }
     }
 
@@ -378,8 +378,8 @@ static DeviceState *lynx_create_aia(RISCVVirtAIAType aia_type, int aia_guests,
                                      memmap[LYNX_APLIC_M].size,
                                      (msimode) ? 0 : base_hartid,
                                      (msimode) ? 0 : hart_count,
-                                     VIRT_IRQCHIP_NUM_SOURCES,
-                                     VIRT_IRQCHIP_NUM_PRIO_BITS,
+                                     LYNX_IRQCHIP_NUM_SOURCES,
+                                     LYNX_IRQCHIP_NUM_PRIO_BITS,
                                      msimode, true, NULL);
     }
 
@@ -389,8 +389,8 @@ static DeviceState *lynx_create_aia(RISCVVirtAIAType aia_type, int aia_guests,
                                  memmap[LYNX_APLIC_S].size,
                                  (msimode) ? 0 : base_hartid,
                                  (msimode) ? 0 : hart_count,
-                                 VIRT_IRQCHIP_NUM_SOURCES,
-                                 VIRT_IRQCHIP_NUM_PRIO_BITS,
+                                 LYNX_IRQCHIP_NUM_SOURCES,
+                                 LYNX_IRQCHIP_NUM_PRIO_BITS,
                                  msimode, false, aplic_m);
 
     if (kvm_enabled() && msimode) {
@@ -409,14 +409,14 @@ static void create_platform_bus(RISCVVirtState *s, DeviceState *irqchip)
 
     dev = qdev_new(TYPE_PLATFORM_BUS_DEVICE);
     dev->id = g_strdup(TYPE_PLATFORM_BUS_DEVICE);
-    qdev_prop_set_uint32(dev, "num_irqs", VIRT_PLATFORM_BUS_NUM_IRQS);
+    qdev_prop_set_uint32(dev, "num_irqs", LYNX_PLATFORM_BUS_NUM_IRQS);
     qdev_prop_set_uint32(dev, "mmio_size", s->memmap[LYNX_PLATFORM_BUS].size);
     sysbus_realize_and_unref(SYS_BUS_DEVICE(dev), &error_fatal);
     s->platform_bus_dev = dev;
 
     sysbus = SYS_BUS_DEVICE(dev);
-    for (i = 0; i < VIRT_PLATFORM_BUS_NUM_IRQS; i++) {
-        int irq = VIRT_PLATFORM_BUS_IRQ + i;
+    for (i = 0; i < LYNX_PLATFORM_BUS_NUM_IRQS; i++) {
+        int irq = LYNX_PLATFORM_BUS_IRQ + i;
         sysbus_connect_irq(sysbus, i, qdev_get_gpio_in(irqchip, irq));
     }
 
@@ -674,7 +674,7 @@ static void lynx_machine_init(MachineState *machine)
 
     if (kvm_enabled() && virt_use_kvm_aia_aplic_imsic(s->aia_type)) {
         kvm_riscv_aia_create(machine, IMSIC_MMIO_GROUP_MIN_SHIFT,
-                             VIRT_IRQCHIP_NUM_SOURCES, VIRT_IRQCHIP_NUM_MSIS,
+                             LYNX_IRQCHIP_NUM_SOURCES, LYNX_IRQCHIP_NUM_MSIS,
                              s->memmap[LYNX_APLIC_S].base,
                              s->memmap[LYNX_IMSIC_S].base,
                              s->aia_guests);
@@ -796,10 +796,10 @@ static void lynx_set_aia_guests(Object *obj, const char *val, Error **errp)
     RISCVVirtState *s = RISCV_LYNX_MACHINE(obj);
 
     s->aia_guests = atoi(val);
-    if (s->aia_guests < 0 || s->aia_guests > VIRT_IRQCHIP_MAX_GUESTS) {
+    if (s->aia_guests < 0 || s->aia_guests > LYNX_IRQCHIP_MAX_GUESTS) {
         error_setg(errp, "Invalid number of AIA IMSIC guests");
         error_append_hint(errp, "Valid values be between 0 and %d.\n",
-                          VIRT_IRQCHIP_MAX_GUESTS);
+                          LYNX_IRQCHIP_MAX_GUESTS);
     }
 }
 
@@ -989,7 +989,7 @@ static void lynx_machine_class_init(ObjectClass *oc, const void *data)
         g_autofree char *str =
             g_strdup_printf("Set number of guest MMIO pages for AIA IMSIC. "
                             "Valid value should be between 0 and %d.",
-                            VIRT_IRQCHIP_MAX_GUESTS);
+                            LYNX_IRQCHIP_MAX_GUESTS);
         object_class_property_set_description(oc, "aia-guests", str);
     }
 

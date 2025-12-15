@@ -151,7 +151,7 @@ static void acpi_dsdt_add_plic_aplic(Aml *scope, uint8_t socket_count,
 
     for (socket = 0; socket < socket_count; socket++) {
         plic_aplic_addr = mmio_base + mmio_size * socket;
-        gsi_base = VIRT_IRQCHIP_NUM_SOURCES * socket;
+        gsi_base = LYNX_IRQCHIP_NUM_SOURCES * socket;
         Aml *dev = aml_device("IC%.02X", socket);
         aml_append(dev, aml_name_decl("_HID", aml_string("%s", hid)));
         aml_append(dev, aml_name_decl("_UID", aml_int(socket)));
@@ -487,15 +487,15 @@ static void build_dsdt(GArray *table_data,
     } else if (socket_count == 2) {
         virtio_acpi_dsdt_add(scope, memmap[LYNX_VIRTIO].base,
                              memmap[LYNX_VIRTIO].size,
-                             LYNX_VIRTIO_IRQ + VIRT_IRQCHIP_NUM_SOURCES, 0,
+                             LYNX_VIRTIO_IRQ + LYNX_IRQCHIP_NUM_SOURCES, 0,
                              LYNX_VIRTIO_COUNT);
-        acpi_dsdt_add_gpex_host(scope, LYNX_PCIE_IRQ + VIRT_IRQCHIP_NUM_SOURCES);
+        acpi_dsdt_add_gpex_host(scope, LYNX_PCIE_IRQ + LYNX_IRQCHIP_NUM_SOURCES);
     } else {
         virtio_acpi_dsdt_add(scope, memmap[LYNX_VIRTIO].base,
                              memmap[LYNX_VIRTIO].size,
-                             LYNX_VIRTIO_IRQ + VIRT_IRQCHIP_NUM_SOURCES, 0,
+                             LYNX_VIRTIO_IRQ + LYNX_IRQCHIP_NUM_SOURCES, 0,
                              LYNX_VIRTIO_COUNT);
-        acpi_dsdt_add_gpex_host(scope, LYNX_PCIE_IRQ + VIRT_IRQCHIP_NUM_SOURCES * 2);
+        acpi_dsdt_add_gpex_host(scope, LYNX_PCIE_IRQ + LYNX_IRQCHIP_NUM_SOURCES * 2);
     }
 
     aml_append(dsdt, scope);
@@ -556,9 +556,9 @@ static void build_madt(GArray *table_data,
         build_append_int_noprefix(table_data, 0, 1);        /* Reserved */
         build_append_int_noprefix(table_data, 0, 4);        /* Flags */
         /* Number of supervisor mode Interrupt Identities */
-        build_append_int_noprefix(table_data, VIRT_IRQCHIP_NUM_MSIS, 2);
+        build_append_int_noprefix(table_data, LYNX_IRQCHIP_NUM_MSIS, 2);
         /* Number of guest mode Interrupt Identities */
-        build_append_int_noprefix(table_data, VIRT_IRQCHIP_NUM_MSIS, 2);
+        build_append_int_noprefix(table_data, LYNX_IRQCHIP_NUM_MSIS, 2);
         /* Guest Index Bits */
         build_append_int_noprefix(table_data, guest_index_bits, 1);
         /* Hart Index Bits */
@@ -574,7 +574,7 @@ static void build_madt(GArray *table_data,
         for (socket = 0; socket < riscv_socket_count(ms); socket++) {
             aplic_addr = s->memmap[LYNX_APLIC_S].base +
                              s->memmap[LYNX_APLIC_S].size * socket;
-            gsi_base = VIRT_IRQCHIP_NUM_SOURCES * socket;
+            gsi_base = LYNX_IRQCHIP_NUM_SOURCES * socket;
             build_append_int_noprefix(table_data, 0x1A, 1);    /* Type */
             build_append_int_noprefix(table_data, 36, 1);      /* Length */
             build_append_int_noprefix(table_data, 1, 1);       /* Version */
@@ -590,7 +590,7 @@ static void build_madt(GArray *table_data,
                 build_append_int_noprefix(table_data, 0, 2);
             }
             /* Total External Interrupt Sources Supported */
-            build_append_int_noprefix(table_data, VIRT_IRQCHIP_NUM_SOURCES, 2);
+            build_append_int_noprefix(table_data, LYNX_IRQCHIP_NUM_SOURCES, 2);
             /* Global System Interrupt Base */
             build_append_int_noprefix(table_data, gsi_base, 4);
             /* APLIC Address */
@@ -604,7 +604,7 @@ static void build_madt(GArray *table_data,
         for (socket = 0; socket < riscv_socket_count(ms); socket++) {
             aplic_addr = s->memmap[LYNX_PLIC].base +
                          s->memmap[LYNX_PLIC].size * socket;
-            gsi_base = VIRT_IRQCHIP_NUM_SOURCES * socket;
+            gsi_base = LYNX_IRQCHIP_NUM_SOURCES * socket;
             build_append_int_noprefix(table_data, 0x1B, 1);   /* Type */
             build_append_int_noprefix(table_data, 36, 1);     /* Length */
             build_append_int_noprefix(table_data, 1, 1);      /* Version */
@@ -612,7 +612,7 @@ static void build_madt(GArray *table_data,
             build_append_int_noprefix(table_data, 0, 8);      /* Hardware ID */
             /* Total External Interrupt Sources Supported */
             build_append_int_noprefix(table_data,
-                                      VIRT_IRQCHIP_NUM_SOURCES - 1, 2);
+                                      LYNX_IRQCHIP_NUM_SOURCES - 1, 2);
             build_append_int_noprefix(table_data, 0, 2);     /* Max Priority */
             build_append_int_noprefix(table_data, 0, 4);     /* Flags */
             /* PLIC Size */
