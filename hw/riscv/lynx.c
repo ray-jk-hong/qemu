@@ -158,8 +158,7 @@ static void lynx_flash_map1(PFlashCFI01 *flash,
                                                        0));
 }
 
-static void lynx_flash_map(RISCVLynxState *s,
-                           MemoryRegion *sysmem)
+static void lynx_flash_map(RISCVLynxState *s, MemoryRegion *sysmem)
 {
     hwaddr flashsize = s->memmap[LYNX_FLASH].size / 2;
     hwaddr flashbase = s->memmap[LYNX_FLASH].base;
