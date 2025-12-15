@@ -75,27 +75,27 @@ static bool virt_aclint_allowed(void)
 }
 
 static const MemMapEntry lynx_memmap[] = {
-    [VIRT_DEBUG] =        {        0x0,         0x100 },
-    [VIRT_MROM] =         {     0x1000,        0xf000 },
-    [VIRT_TEST] =         {   0x100000,        0x1000 },
-    [VIRT_RTC] =          {   0x101000,        0x1000 },
-    [VIRT_CLINT] =        {  0x2000000,       0x10000 },
-    [VIRT_ACLINT_SSWI] =  {  0x2F00000,        0x4000 },
-    [VIRT_PCIE_PIO] =     {  0x3000000,       0x10000 },
-    [VIRT_IOMMU_SYS] =    {  0x3010000,        0x1000 },
-    [VIRT_PLATFORM_BUS] = {  0x4000000,     0x2000000 },
-    [VIRT_PLIC] =         {  0xc000000, VIRT_PLIC_SIZE(LYNX_CPUS_MAX * 2) },
-    [VIRT_APLIC_M] =      {  0xc000000, APLIC_SIZE(LYNX_CPUS_MAX) },
-    [VIRT_APLIC_S] =      {  0xd000000, APLIC_SIZE(LYNX_CPUS_MAX) },
-    [VIRT_UART0] =        { 0x10000000,         0x100 },
-    [VIRT_VIRTIO] =       { 0x10001000,        0x1000 },
-    [VIRT_FW_CFG] =       { 0x10100000,          0x18 },
-    [VIRT_FLASH] =        { 0x20000000,     0x4000000 },
-    [VIRT_IMSIC_M] =      { 0x24000000, VIRT_IMSIC_MAX_SIZE },
-    [VIRT_IMSIC_S] =      { 0x28000000, VIRT_IMSIC_MAX_SIZE },
-    [VIRT_PCIE_ECAM] =    { 0x30000000,    0x10000000 },
-    [VIRT_PCIE_MMIO] =    { 0x40000000,    0x40000000 },
-    [VIRT_DRAM] =         { 0x80000000,           0x0 },
+    [LYNX_DEBUG] =        {        0x0,         0x100 },
+    [LYNX_MROM] =         {     0x1000,        0xf000 },
+    [LYNX_TEST] =         {   0x100000,        0x1000 },
+    [LYNX_RTC] =          {   0x101000,        0x1000 },
+    [LYNX_CLINT] =        {  0x2000000,       0x10000 },
+    [LYNX_ACLINT_SSWI] =  {  0x2F00000,        0x4000 },
+    [LYNX_PCIE_PIO] =     {  0x3000000,       0x10000 },
+    [LYNX_IOMMU_SYS] =    {  0x3010000,        0x1000 },
+    [LYNX_PLATFORM_BUS] = {  0x4000000,     0x2000000 },
+    [LYNX_PLIC] =         {  0xc000000, VIRT_PLIC_SIZE(LYNX_CPUS_MAX * 2) },
+    [LYNX_APLIC_M] =      {  0xc000000, APLIC_SIZE(LYNX_CPUS_MAX) },
+    [LYNX_APLIC_S] =      {  0xd000000, APLIC_SIZE(LYNX_CPUS_MAX) },
+    [LYNX_UART0] =        { 0x10000000,         0x100 },
+    [LYNX_VIRTIO] =       { 0x10001000,        0x1000 },
+    [LYNX_FW_CFG] =       { 0x10100000,          0x18 },
+    [LYNX_FLASH] =        { 0x20000000,     0x4000000 },
+    [LYNX_IMSIC_M] =      { 0x24000000, LYNX_IMSIC_MAX_SIZE },
+    [LYNX_IMSIC_S] =      { 0x28000000, LYNX_IMSIC_MAX_SIZE },
+    [LYNX_PCIE_ECAM] =    { 0x30000000,    0x10000000 },
+    [LYNX_PCIE_MMIO] =    { 0x40000000,    0x40000000 },
+    [LYNX_DRAM] =         { 0x80000000,           0x0 },
 };
 
 /* PCIe high mmio is fixed for RV32 */
@@ -161,8 +161,8 @@ static void lynx_flash_map1(PFlashCFI01 *flash,
 static void lynx_flash_map(RISCVVirtState *s,
                            MemoryRegion *sysmem)
 {
-    hwaddr flashsize = s->memmap[VIRT_FLASH].size / 2;
-    hwaddr flashbase = s->memmap[VIRT_FLASH].base;
+    hwaddr flashsize = s->memmap[LYNX_FLASH].size / 2;
+    hwaddr flashbase = s->memmap[LYNX_FLASH].base;
 
     lynx_flash_map1(s->flash[0], flashbase, flashsize,
                     sysmem);
@@ -190,7 +190,7 @@ static void lynx_create_fdt_virtio_iommu(RISCVVirtState *s, uint16_t bdf)
     g_autofree char *pci_node = NULL;
 
     pci_node = g_strdup_printf("/soc/pci@%"HWADDR_PRIx,
-                               s->memmap[VIRT_PCIE_ECAM].base);
+                               s->memmap[LYNX_PCIE_ECAM].base);
     iommu_node = g_strdup_printf("%s/virtio_iommu@%x,%x", pci_node,
                                  PCI_SLOT(bdf), PCI_FUNC(bdf));
     iommu_phandle = qemu_fdt_alloc_phandle(fdt);
@@ -218,7 +218,7 @@ static void lynx_create_fdt_iommu(RISCVVirtState *s, uint16_t bdf)
     g_autofree char *pci_node = NULL;
 
     pci_node = g_strdup_printf("/soc/pci@%"HWADDR_PRIx,
-                               s->memmap[VIRT_PCIE_ECAM].base);
+                               s->memmap[LYNX_PCIE_ECAM].base);
     iommu_node = g_strdup_printf("%s/iommu@%x", pci_node, bdf);
     iommu_phandle = qemu_fdt_alloc_phandle(fdt);
     qemu_fdt_add_subnode(fdt, iommu_node);
@@ -241,14 +241,14 @@ static inline DeviceState *lynx_gpex_pcie_init(MemoryRegion *sys_mem,
     DeviceState *dev;
     MemoryRegion *ecam_alias, *ecam_reg;
     MemoryRegion *mmio_alias, *high_mmio_alias, *mmio_reg;
-    hwaddr ecam_base = s->memmap[VIRT_PCIE_ECAM].base;
-    hwaddr ecam_size = s->memmap[VIRT_PCIE_ECAM].size;
-    hwaddr mmio_base = s->memmap[VIRT_PCIE_MMIO].base;
-    hwaddr mmio_size = s->memmap[VIRT_PCIE_MMIO].size;
+    hwaddr ecam_base = s->memmap[LYNX_PCIE_ECAM].base;
+    hwaddr ecam_size = s->memmap[LYNX_PCIE_ECAM].size;
+    hwaddr mmio_base = s->memmap[LYNX_PCIE_MMIO].base;
+    hwaddr mmio_size = s->memmap[LYNX_PCIE_MMIO].size;
     hwaddr high_mmio_base = virt_high_pcie_memmap.base;
     hwaddr high_mmio_size = virt_high_pcie_memmap.size;
-    hwaddr pio_base = s->memmap[VIRT_PCIE_PIO].base;
-    hwaddr pio_size = s->memmap[VIRT_PCIE_PIO].size;
+    hwaddr pio_base = s->memmap[LYNX_PCIE_PIO].base;
+    hwaddr pio_size = s->memmap[LYNX_PCIE_PIO].size;
     qemu_irq irq;
     int i;
 
@@ -327,7 +327,7 @@ static DeviceState *lynx_create_plic(const MemMapEntry *memmap, int socket,
 
     /* Per-socket PLIC */
     return sifive_plic_create(
-             memmap[VIRT_PLIC].base + socket * memmap[VIRT_PLIC].size,
+             memmap[LYNX_PLIC].base + socket * memmap[LYNX_PLIC].size,
              plic_hart_config, hart_count, base_hartid,
              VIRT_IRQCHIP_NUM_SOURCES,
              ((1U << VIRT_IRQCHIP_NUM_PRIO_BITS) - 1),
@@ -335,7 +335,7 @@ static DeviceState *lynx_create_plic(const MemMapEntry *memmap, int socket,
              VIRT_PLIC_ENABLE_BASE, VIRT_PLIC_ENABLE_STRIDE,
              VIRT_PLIC_CONTEXT_BASE,
              VIRT_PLIC_CONTEXT_STRIDE,
-             memmap[VIRT_PLIC].size);
+             memmap[LYNX_PLIC].size);
 }
 
 static DeviceState *lynx_create_aia(RISCVVirtAIAType aia_type, int aia_guests,
@@ -352,8 +352,8 @@ static DeviceState *lynx_create_aia(RISCVVirtAIAType aia_type, int aia_guests,
     if (msimode) {
         if (!kvm_enabled()) {
             /* Per-socket M-level IMSICs */
-            addr = memmap[VIRT_IMSIC_M].base +
-                   socket * VIRT_IMSIC_GROUP_MAX_SIZE;
+            addr = memmap[LYNX_IMSIC_M].base +
+                   socket * LYNX_IMSIC_GROUP_MAX_SIZE;
             for (i = 0; i < hart_count; i++) {
                 riscv_imsic_create(addr + i * IMSIC_HART_SIZE(0),
                                    base_hartid + i, true, 1,
@@ -363,7 +363,7 @@ static DeviceState *lynx_create_aia(RISCVVirtAIAType aia_type, int aia_guests,
 
         /* Per-socket S-level IMSICs */
         guest_bits = lynx_imsic_num_bits(aia_guests + 1);
-        addr = memmap[VIRT_IMSIC_S].base + socket * VIRT_IMSIC_GROUP_MAX_SIZE;
+        addr = memmap[LYNX_IMSIC_S].base + socket * LYNX_IMSIC_GROUP_MAX_SIZE;
         for (i = 0; i < hart_count; i++) {
             riscv_imsic_create(addr + i * IMSIC_HART_SIZE(guest_bits),
                                base_hartid + i, false, 1 + aia_guests,
@@ -373,9 +373,9 @@ static DeviceState *lynx_create_aia(RISCVVirtAIAType aia_type, int aia_guests,
 
     if (!kvm_enabled()) {
         /* Per-socket M-level APLIC */
-        aplic_m = riscv_aplic_create(memmap[VIRT_APLIC_M].base +
-                                     socket * memmap[VIRT_APLIC_M].size,
-                                     memmap[VIRT_APLIC_M].size,
+        aplic_m = riscv_aplic_create(memmap[LYNX_APLIC_M].base +
+                                     socket * memmap[LYNX_APLIC_M].size,
+                                     memmap[LYNX_APLIC_M].size,
                                      (msimode) ? 0 : base_hartid,
                                      (msimode) ? 0 : hart_count,
                                      VIRT_IRQCHIP_NUM_SOURCES,
@@ -384,9 +384,9 @@ static DeviceState *lynx_create_aia(RISCVVirtAIAType aia_type, int aia_guests,
     }
 
     /* Per-socket S-level APLIC */
-    aplic_s = riscv_aplic_create(memmap[VIRT_APLIC_S].base +
-                                 socket * memmap[VIRT_APLIC_S].size,
-                                 memmap[VIRT_APLIC_S].size,
+    aplic_s = riscv_aplic_create(memmap[LYNX_APLIC_S].base +
+                                 socket * memmap[LYNX_APLIC_S].size,
+                                 memmap[LYNX_APLIC_S].size,
                                  (msimode) ? 0 : base_hartid,
                                  (msimode) ? 0 : hart_count,
                                  VIRT_IRQCHIP_NUM_SOURCES,
@@ -410,7 +410,7 @@ static void create_platform_bus(RISCVVirtState *s, DeviceState *irqchip)
     dev = qdev_new(TYPE_PLATFORM_BUS_DEVICE);
     dev->id = g_strdup(TYPE_PLATFORM_BUS_DEVICE);
     qdev_prop_set_uint32(dev, "num_irqs", VIRT_PLATFORM_BUS_NUM_IRQS);
-    qdev_prop_set_uint32(dev, "mmio_size", s->memmap[VIRT_PLATFORM_BUS].size);
+    qdev_prop_set_uint32(dev, "mmio_size", s->memmap[LYNX_PLATFORM_BUS].size);
     sysbus_realize_and_unref(SYS_BUS_DEVICE(dev), &error_fatal);
     s->platform_bus_dev = dev;
 
@@ -421,7 +421,7 @@ static void create_platform_bus(RISCVVirtState *s, DeviceState *irqchip)
     }
 
     memory_region_add_subregion(sysmem,
-                                s->memmap[VIRT_PLATFORM_BUS].base,
+                                s->memmap[LYNX_PLATFORM_BUS].base,
                                 sysbus_mmio_get_region(sysbus, 0));
 }
 
@@ -447,7 +447,7 @@ static void lynx_build_smbios(RISCVVirtState *s)
     }
 
     /* build the array of physical mem area from base_memmap */
-    mem_array.address = s->memmap[VIRT_DRAM].base;
+    mem_array.address = s->memmap[LYNX_DRAM].base;
     mem_array.length = ms->ram_size;
 
     smbios_get_tables(ms, SMBIOS_ENTRY_POINT_TYPE_64,
@@ -469,7 +469,7 @@ static void lynx_machine_done(Notifier *notifier, void *data)
     RISCVVirtState *s = container_of(notifier, RISCVVirtState,
                                      machine_done);
     MachineState *machine = MACHINE(s);
-    hwaddr start_addr = s->memmap[VIRT_DRAM].base;
+    hwaddr start_addr = s->memmap[LYNX_DRAM].base;
     target_ulong firmware_end_addr, kernel_start_addr;
     const char *firmware_name = riscv_default_firmware_name(&s->soc[0]);
     uint64_t fdt_load_addr;
@@ -505,14 +505,14 @@ static void lynx_machine_done(Notifier *notifier, void *data)
              * let's overwrite the address we jump to after reset to
              * the base of the flash.
              */
-            start_addr = s->memmap[VIRT_FLASH].base;
+            start_addr = s->memmap[LYNX_FLASH].base;
         } else {
             /*
              * Pflash was supplied but either KVM guest or bios is not none.
              * In this case, base of the flash would contain S-mode payload.
              */
             riscv_setup_firmware_boot(machine);
-            kernel_entry = s->memmap[VIRT_FLASH].base;
+            kernel_entry = s->memmap[LYNX_FLASH].base;
         }
     }
 
@@ -526,15 +526,15 @@ static void lynx_machine_done(Notifier *notifier, void *data)
         kernel_entry = boot_info.image_low_addr;
     }
 
-    fdt_load_addr = riscv_compute_fdt_addr(s->memmap[VIRT_DRAM].base,
-                                           s->memmap[VIRT_DRAM].size,
+    fdt_load_addr = riscv_compute_fdt_addr(s->memmap[LYNX_DRAM].base,
+                                           s->memmap[LYNX_DRAM].size,
                                            machine, &boot_info);
     riscv_load_fdt(fdt_load_addr, machine->fdt);
 
     /* load the reset vector */
     riscv_setup_rom_reset_vec(machine, &s->soc[0], start_addr,
-                              s->memmap[VIRT_MROM].base,
-                              s->memmap[VIRT_MROM].size, kernel_entry,
+                              s->memmap[LYNX_MROM].base,
+                              s->memmap[LYNX_MROM].size, kernel_entry,
                               fdt_load_addr);
 
     /*
@@ -611,7 +611,7 @@ static void lynx_machine_init(MachineState *machine)
         if (virt_aclint_allowed() && s->have_aclint) {
             if (s->aia_type == VIRT_AIA_TYPE_APLIC_IMSIC) {
                 /* Per-socket ACLINT MTIMER */
-                riscv_aclint_mtimer_create(s->memmap[VIRT_CLINT].base +
+                riscv_aclint_mtimer_create(s->memmap[LYNX_CLINT].base +
                             i * RISCV_ACLINT_DEFAULT_MTIMER_SIZE,
                         RISCV_ACLINT_DEFAULT_MTIMER_SIZE,
                         base_hartid, hart_count,
@@ -620,28 +620,28 @@ static void lynx_machine_init(MachineState *machine)
                         RISCV_ACLINT_DEFAULT_TIMEBASE_FREQ, true);
             } else {
                 /* Per-socket ACLINT MSWI, MTIMER, and SSWI */
-                riscv_aclint_swi_create(s->memmap[VIRT_CLINT].base +
-                            i * s->memmap[VIRT_CLINT].size,
+                riscv_aclint_swi_create(s->memmap[LYNX_CLINT].base +
+                            i * s->memmap[LYNX_CLINT].size,
                         base_hartid, hart_count, false);
-                riscv_aclint_mtimer_create(s->memmap[VIRT_CLINT].base +
-                            i * s->memmap[VIRT_CLINT].size +
+                riscv_aclint_mtimer_create(s->memmap[LYNX_CLINT].base +
+                            i * s->memmap[LYNX_CLINT].size +
                             RISCV_ACLINT_SWI_SIZE,
                         RISCV_ACLINT_DEFAULT_MTIMER_SIZE,
                         base_hartid, hart_count,
                         RISCV_ACLINT_DEFAULT_MTIMECMP,
                         RISCV_ACLINT_DEFAULT_MTIME,
                         RISCV_ACLINT_DEFAULT_TIMEBASE_FREQ, true);
-                riscv_aclint_swi_create(s->memmap[VIRT_ACLINT_SSWI].base +
-                            i * s->memmap[VIRT_ACLINT_SSWI].size,
+                riscv_aclint_swi_create(s->memmap[LYNX_ACLINT_SSWI].base +
+                            i * s->memmap[LYNX_ACLINT_SSWI].size,
                         base_hartid, hart_count, true);
             }
         } else if (tcg_enabled()) {
             /* Per-socket SiFive CLINT */
             riscv_aclint_swi_create(
-                    s->memmap[VIRT_CLINT].base + i * s->memmap[VIRT_CLINT].size,
+                    s->memmap[LYNX_CLINT].base + i * s->memmap[LYNX_CLINT].size,
                     base_hartid, hart_count, false);
-            riscv_aclint_mtimer_create(s->memmap[VIRT_CLINT].base +
-                    i * s->memmap[VIRT_CLINT].size + RISCV_ACLINT_SWI_SIZE,
+            riscv_aclint_mtimer_create(s->memmap[LYNX_CLINT].base +
+                    i * s->memmap[LYNX_CLINT].size + RISCV_ACLINT_SWI_SIZE,
                     RISCV_ACLINT_DEFAULT_MTIMER_SIZE, base_hartid, hart_count,
                     RISCV_ACLINT_DEFAULT_MTIMECMP, RISCV_ACLINT_DEFAULT_MTIME,
                     RISCV_ACLINT_DEFAULT_TIMEBASE_FREQ, true);
@@ -675,8 +675,8 @@ static void lynx_machine_init(MachineState *machine)
     if (kvm_enabled() && virt_use_kvm_aia_aplic_imsic(s->aia_type)) {
         kvm_riscv_aia_create(machine, IMSIC_MMIO_GROUP_MIN_SHIFT,
                              VIRT_IRQCHIP_NUM_SOURCES, VIRT_IRQCHIP_NUM_MSIS,
-                             s->memmap[VIRT_APLIC_S].base,
-                             s->memmap[VIRT_IMSIC_S].base,
+                             s->memmap[LYNX_APLIC_S].base,
+                             s->memmap[LYNX_IMSIC_S].base,
                              s->aia_guests);
     }
 
@@ -692,36 +692,36 @@ static void lynx_machine_init(MachineState *machine)
         virt_high_pcie_memmap.size = VIRT32_HIGH_PCIE_MMIO_SIZE;
     } else {
         virt_high_pcie_memmap.size = VIRT64_HIGH_PCIE_MMIO_SIZE;
-        virt_high_pcie_memmap.base = s->memmap[VIRT_DRAM].base +
+        virt_high_pcie_memmap.base = s->memmap[LYNX_DRAM].base +
                                      machine->ram_size;
         virt_high_pcie_memmap.base =
             ROUND_UP(virt_high_pcie_memmap.base, virt_high_pcie_memmap.size);
     }
 
     /* register system main memory (actual RAM) */
-    memory_region_add_subregion(system_memory, s->memmap[VIRT_DRAM].base,
+    memory_region_add_subregion(system_memory, s->memmap[LYNX_DRAM].base,
                                 machine->ram);
 
     /* boot rom */
     memory_region_init_rom(mask_rom, NULL, "riscv_virt_board.mrom",
-                           s->memmap[VIRT_MROM].size, &error_fatal);
-    memory_region_add_subregion(system_memory, s->memmap[VIRT_MROM].base,
+                           s->memmap[LYNX_MROM].size, &error_fatal);
+    memory_region_add_subregion(system_memory, s->memmap[LYNX_MROM].base,
                                 mask_rom);
 
     /*
      * Init fw_cfg. Must be done before riscv_load_fdt, otherwise the
      * device tree cannot be altered and we get FDT_ERR_NOSPACE.
      */
-    s->fw_cfg = lynx_create_fw_cfg(machine, s->memmap[VIRT_FW_CFG].base);
+    s->fw_cfg = lynx_create_fw_cfg(machine, s->memmap[LYNX_FW_CFG].base);
     rom_set_fw(s->fw_cfg);
 
     /* SiFive Test MMIO device */
-    sifive_test_create(s->memmap[VIRT_TEST].base);
+    sifive_test_create(s->memmap[LYNX_TEST].base);
 
     /* VirtIO MMIO devices */
     for (i = 0; i < VIRTIO_COUNT; i++) {
         sysbus_create_simple("virtio-mmio",
-            s->memmap[VIRT_VIRTIO].base + i * s->memmap[VIRT_VIRTIO].size,
+            s->memmap[LYNX_VIRTIO].base + i * s->memmap[LYNX_VIRTIO].size,
             qdev_get_gpio_in(virtio_irqchip, VIRTIO_IRQ + i));
     }
 
@@ -729,11 +729,11 @@ static void lynx_machine_init(MachineState *machine)
 
     create_platform_bus(s, mmio_irqchip);
 
-    serial_mm_init(system_memory, s->memmap[VIRT_UART0].base,
+    serial_mm_init(system_memory, s->memmap[LYNX_UART0].base,
         LYNX_SERIAL_REG_SHIFT, qdev_get_gpio_in(mmio_irqchip, UART0_IRQ), 
         399193, serial_hd(0), DEVICE_LITTLE_ENDIAN);
 
-    sysbus_create_simple("goldfish_rtc", s->memmap[VIRT_RTC].base,
+    sysbus_create_simple("goldfish_rtc", s->memmap[LYNX_RTC].base,
         qdev_get_gpio_in(mmio_irqchip, RTC_IRQ));
 
     for (i = 0; i < ARRAY_SIZE(s->flash); i++) {
@@ -756,7 +756,7 @@ static void lynx_machine_init(MachineState *machine)
         DeviceState *iommu_sys = qdev_new(TYPE_RISCV_IOMMU_SYS);
 
         object_property_set_uint(OBJECT(iommu_sys), "addr",
-                                 s->memmap[VIRT_IOMMU_SYS].base,
+                                 s->memmap[LYNX_IOMMU_SYS].base,
                                  &error_fatal);
         object_property_set_uint(OBJECT(iommu_sys), "base-irq",
                                  IOMMU_SYS_IRQ,

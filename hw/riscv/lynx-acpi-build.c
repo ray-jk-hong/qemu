@@ -76,8 +76,8 @@ static void riscv_acpi_madt_add_rintc(uint32_t uid,
     local_cpu_id = (arch_ids->cpus[uid].arch_id -
                     riscv_socket_first_hartid(ms, socket_id)) %
                     riscv_socket_hart_count(ms, socket_id);
-    imsic_socket_addr = s->memmap[VIRT_IMSIC_S].base +
-                        (socket_id * VIRT_IMSIC_GROUP_MAX_SIZE);
+    imsic_socket_addr = s->memmap[LYNX_IMSIC_S].base +
+                        (socket_id * LYNX_IMSIC_GROUP_MAX_SIZE);
     imsic_size = IMSIC_HART_SIZE(guest_index_bits);
     imsic_addr = imsic_socket_addr + local_cpu_id * imsic_size;
     build_append_int_noprefix(entry, 0x18, 1);       /* Type     */
@@ -239,7 +239,7 @@ spcr_setup(GArray *table_data, BIOSLinker *linker, RISCVVirtState *s)
         .base_addr.width = 32,
         .base_addr.offset = 0,
         .base_addr.size = 1,
-        .base_addr.addr = s->memmap[VIRT_UART0].base,
+        .base_addr.addr = s->memmap[LYNX_UART0].base,
         .interrupt_type = (1 << 4),/* Bit[4] RISC-V PLIC/APLIC */
         .pc_interrupt = 0,
         .interrupt = UART0_IRQ,
@@ -462,37 +462,37 @@ static void build_dsdt(GArray *table_data,
     scope = aml_scope("\\_SB");
     acpi_dsdt_add_cpus(scope, s);
 
-    fw_cfg_acpi_dsdt_add(scope, &memmap[VIRT_FW_CFG]);
+    fw_cfg_acpi_dsdt_add(scope, &memmap[LYNX_FW_CFG]);
 
     socket_count = riscv_socket_count(ms);
 
     if (s->aia_type == VIRT_AIA_TYPE_NONE) {
-        acpi_dsdt_add_plic_aplic(scope, socket_count, memmap[VIRT_PLIC].base,
-                                 memmap[VIRT_PLIC].size, "RSCV0001");
+        acpi_dsdt_add_plic_aplic(scope, socket_count, memmap[LYNX_PLIC].base,
+                                 memmap[LYNX_PLIC].size, "RSCV0001");
     } else {
-        acpi_dsdt_add_plic_aplic(scope, socket_count, memmap[VIRT_APLIC_S].base,
-                                 memmap[VIRT_APLIC_S].size, "RSCV0002");
+        acpi_dsdt_add_plic_aplic(scope, socket_count, memmap[LYNX_APLIC_S].base,
+                                 memmap[LYNX_APLIC_S].size, "RSCV0002");
     }
 
-    acpi_dsdt_add_uart(scope, &memmap[VIRT_UART0], UART0_IRQ);
+    acpi_dsdt_add_uart(scope, &memmap[LYNX_UART0], UART0_IRQ);
     if (lynx_is_iommu_sys_enabled(s)) {
-        acpi_dsdt_add_iommu_sys(scope, &memmap[VIRT_IOMMU_SYS], IOMMU_SYS_IRQ);
+        acpi_dsdt_add_iommu_sys(scope, &memmap[LYNX_IOMMU_SYS], IOMMU_SYS_IRQ);
     }
 
     if (socket_count == 1) {
-        virtio_acpi_dsdt_add(scope, memmap[VIRT_VIRTIO].base,
-                             memmap[VIRT_VIRTIO].size,
+        virtio_acpi_dsdt_add(scope, memmap[LYNX_VIRTIO].base,
+                             memmap[LYNX_VIRTIO].size,
                              VIRTIO_IRQ, 0, VIRTIO_COUNT);
         acpi_dsdt_add_gpex_host(scope, PCIE_IRQ);
     } else if (socket_count == 2) {
-        virtio_acpi_dsdt_add(scope, memmap[VIRT_VIRTIO].base,
-                             memmap[VIRT_VIRTIO].size,
+        virtio_acpi_dsdt_add(scope, memmap[LYNX_VIRTIO].base,
+                             memmap[LYNX_VIRTIO].size,
                              VIRTIO_IRQ + VIRT_IRQCHIP_NUM_SOURCES, 0,
                              VIRTIO_COUNT);
         acpi_dsdt_add_gpex_host(scope, PCIE_IRQ + VIRT_IRQCHIP_NUM_SOURCES);
     } else {
-        virtio_acpi_dsdt_add(scope, memmap[VIRT_VIRTIO].base,
-                             memmap[VIRT_VIRTIO].size,
+        virtio_acpi_dsdt_add(scope, memmap[LYNX_VIRTIO].base,
+                             memmap[LYNX_VIRTIO].size,
                              VIRTIO_IRQ + VIRT_IRQCHIP_NUM_SOURCES, 0,
                              VIRTIO_COUNT);
         acpi_dsdt_add_gpex_host(scope, PCIE_IRQ + VIRT_IRQCHIP_NUM_SOURCES * 2);
@@ -572,8 +572,8 @@ static void build_madt(GArray *table_data,
     if (s->aia_type != VIRT_AIA_TYPE_NONE) {
         /* APLICs */
         for (socket = 0; socket < riscv_socket_count(ms); socket++) {
-            aplic_addr = s->memmap[VIRT_APLIC_S].base +
-                             s->memmap[VIRT_APLIC_S].size * socket;
+            aplic_addr = s->memmap[LYNX_APLIC_S].base +
+                             s->memmap[LYNX_APLIC_S].size * socket;
             gsi_base = VIRT_IRQCHIP_NUM_SOURCES * socket;
             build_append_int_noprefix(table_data, 0x1A, 1);    /* Type */
             build_append_int_noprefix(table_data, 36, 1);      /* Length */
@@ -597,13 +597,13 @@ static void build_madt(GArray *table_data,
             build_append_int_noprefix(table_data, aplic_addr, 8);
             /* APLIC size */
             build_append_int_noprefix(table_data,
-                                      s->memmap[VIRT_APLIC_S].size, 4);
+                                      s->memmap[LYNX_APLIC_S].size, 4);
         }
     } else {
         /* PLICs */
         for (socket = 0; socket < riscv_socket_count(ms); socket++) {
-            aplic_addr = s->memmap[VIRT_PLIC].base +
-                         s->memmap[VIRT_PLIC].size * socket;
+            aplic_addr = s->memmap[LYNX_PLIC].base +
+                         s->memmap[LYNX_PLIC].size * socket;
             gsi_base = VIRT_IRQCHIP_NUM_SOURCES * socket;
             build_append_int_noprefix(table_data, 0x1B, 1);   /* Type */
             build_append_int_noprefix(table_data, 36, 1);     /* Length */
@@ -616,7 +616,7 @@ static void build_madt(GArray *table_data,
             build_append_int_noprefix(table_data, 0, 2);     /* Max Priority */
             build_append_int_noprefix(table_data, 0, 4);     /* Flags */
             /* PLIC Size */
-            build_append_int_noprefix(table_data, s->memmap[VIRT_PLIC].size, 4);
+            build_append_int_noprefix(table_data, s->memmap[LYNX_PLIC].size, 4);
             /* PLIC Address */
             build_append_int_noprefix(table_data, aplic_addr, 8);
             /* Global System Interrupt Vector Base */
@@ -742,7 +742,7 @@ static void build_rimt(GArray *table_data, BIOSLinker *linker,
         build_append_int_noprefix(table_data, '4', 1);
         /* Base Address */
         build_append_int_noprefix(table_data,
-                                  s->memmap[VIRT_IOMMU_SYS].base, 8);
+                                  s->memmap[LYNX_IOMMU_SYS].base, 8);
         build_append_int_noprefix(table_data, 0, 4);   /* Flags */
     } else {
         /* Hardware ID */
@@ -842,7 +842,7 @@ build_srat(GArray *table_data, BIOSLinker *linker, RISCVVirtState *vms)
         build_append_int_noprefix(table_data, 0, 4); /* Clock Domain */
     }
 
-    mem_base = vms->memmap[VIRT_DRAM].base;
+    mem_base = vms->memmap[LYNX_DRAM].base;
     for (i = 0; i < ms->numa_state->num_nodes; ++i) {
         if (ms->numa_state->nodes[i].node_mem > 0) {
             build_srat_memory(table_data, mem_base,
@@ -897,8 +897,8 @@ static void lynx_acpi_build(RISCVVirtState *s, AcpiBuildTables *tables)
     acpi_add_table(table_offsets, tables_blob);
     {
         AcpiMcfgInfo mcfg = {
-           .base = s->memmap[VIRT_PCIE_ECAM].base,
-           .size = s->memmap[VIRT_PCIE_ECAM].size,
+           .base = s->memmap[LYNX_PCIE_ECAM].base,
+           .size = s->memmap[LYNX_PCIE_ECAM].size,
         };
         build_mcfg(tables_blob, tables->linker, &mcfg, s->oem_id,
                    s->oem_table_id);

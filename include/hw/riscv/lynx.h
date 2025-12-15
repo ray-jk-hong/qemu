@@ -67,27 +67,27 @@ struct RISCVVirtState {
 };
 
 enum {
-    VIRT_DEBUG,
-    VIRT_MROM,
-    VIRT_TEST,
-    VIRT_RTC,
-    VIRT_CLINT,
-    VIRT_ACLINT_SSWI,
-    VIRT_PLIC,
-    VIRT_APLIC_M,
-    VIRT_APLIC_S,
-    VIRT_UART0,
-    VIRT_VIRTIO,
-    VIRT_FW_CFG,
-    VIRT_IMSIC_M,
-    VIRT_IMSIC_S,
-    VIRT_FLASH,
-    VIRT_DRAM,
-    VIRT_PCIE_MMIO,
-    VIRT_PCIE_PIO,
-    VIRT_PLATFORM_BUS,
-    VIRT_PCIE_ECAM,
-    VIRT_IOMMU_SYS,
+    LYNX_DEBUG,
+    LYNX_MROM,
+    LYNX_TEST,
+    LYNX_RTC,
+    LYNX_CLINT,
+    LYNX_ACLINT_SSWI,
+    LYNX_PLIC,
+    LYNX_APLIC_M,
+    LYNX_APLIC_S,
+    LYNX_UART0,
+    LYNX_VIRTIO,
+    LYNX_FW_CFG,
+    LYNX_IMSIC_M,
+    LYNX_IMSIC_S,
+    LYNX_FLASH,
+    LYNX_DRAM,
+    LYNX_PCIE_MMIO,
+    LYNX_PCIE_PIO,
+    LYNX_PLATFORM_BUS,
+    LYNX_PCIE_ECAM,
+    LYNX_IOMMU_SYS,
 };
 
 enum {
@@ -147,15 +147,15 @@ uint32_t lynx_imsic_num_bits(uint32_t count);
  * of lynx machine physical address space.
  */
 
-#define VIRT_IMSIC_GROUP_MAX_SIZE      (1U << IMSIC_MMIO_GROUP_MIN_SHIFT)
-#if VIRT_IMSIC_GROUP_MAX_SIZE < \
+#define LYNX_IMSIC_GROUP_MAX_SIZE      (1U << IMSIC_MMIO_GROUP_MIN_SHIFT)
+#if LYNX_IMSIC_GROUP_MAX_SIZE < \
     IMSIC_GROUP_SIZE(LYNX_CPUS_MAX_BITS, VIRT_IRQCHIP_MAX_GUESTS_BITS)
 #error "Can't accommodate single IMSIC group in address space"
 #endif
 
-#define VIRT_IMSIC_MAX_SIZE            (LYNX_SOCKETS_MAX * \
-                                        VIRT_IMSIC_GROUP_MAX_SIZE)
-#if 0x4000000 < VIRT_IMSIC_MAX_SIZE
+#define LYNX_IMSIC_MAX_SIZE            (LYNX_SOCKETS_MAX * \
+                                        LYNX_IMSIC_GROUP_MAX_SIZE)
+#if 0x4000000 < LYNX_IMSIC_MAX_SIZE
 #error "Can't accommodate all IMSIC groups in address space"
 #endif
 
