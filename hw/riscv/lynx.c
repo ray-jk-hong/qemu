@@ -115,7 +115,7 @@ static PFlashCFI01 *lynx_flash_create1(RISCVLynxState *s,
 {
     /*
      * Create a single flash device.  We use the same parameters as
-     * the flash devices on the ARM virt board.
+     * the flash devices on the RISCV lynxboard.
      */
     DeviceState *dev = qdev_new(TYPE_PFLASH_CFI01);
 
@@ -254,7 +254,7 @@ static inline DeviceState *lynx_gpex_pcie_init(MemoryRegion *sys_mem,
 
     dev = qdev_new(TYPE_GPEX_HOST);
 
-    /* Set GPEX object properties for the virt machine */
+    /* Set GPEX object properties for the lynx machine */
     object_property_set_uint(OBJECT(dev), PCI_HOST_ECAM_BASE,
                             ecam_base, NULL);
     object_property_set_int(OBJECT(dev), PCI_HOST_ECAM_SIZE,
@@ -703,7 +703,7 @@ static void lynx_machine_init(MachineState *machine)
                                 machine->ram);
 
     /* boot rom */
-    memory_region_init_rom(mask_rom, NULL, "riscv_virt_board.mrom",
+    memory_region_init_rom(mask_rom, NULL, "riscv_lynx_board.mrom",
                            s->memmap[LYNX_MROM].size, &error_fatal);
     memory_region_add_subregion(system_memory, s->memmap[LYNX_MROM].base,
                                 mask_rom);
@@ -956,7 +956,7 @@ static void lynx_machine_class_init(ObjectClass *oc, const void *data)
     mc->numa_mem_supported = true;
     /* platform instead of architectural choice */
     mc->cpu_cluster_has_numa_boundary = true;
-    mc->default_ram_id = "riscv_virt_board.ram";
+    mc->default_ram_id = "riscv_lynx_board.ram";
     assert(!mc->get_hotplug_handler);
     mc->get_hotplug_handler = lynx_machine_get_hotplug_handler;
 
