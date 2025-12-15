@@ -476,7 +476,7 @@ static void build_dsdt(GArray *table_data,
 
     acpi_dsdt_add_uart(scope, &memmap[LYNX_UART0], LYNX_UART0_IRQ);
     if (lynx_is_iommu_sys_enabled(s)) {
-        acpi_dsdt_add_iommu_sys(scope, &memmap[LYNX_IOMMU_SYS], IOMMU_SYS_IRQ);
+        acpi_dsdt_add_iommu_sys(scope, &memmap[LYNX_IOMMU_SYS], LYNX_IOMMU_SYS_IRQ);
     }
 
     if (socket_count == 1) {

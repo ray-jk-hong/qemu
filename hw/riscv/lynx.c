@@ -759,7 +759,7 @@ static void lynx_machine_init(MachineState *machine)
                                  s->memmap[LYNX_IOMMU_SYS].base,
                                  &error_fatal);
         object_property_set_uint(OBJECT(iommu_sys), "base-irq",
-                                 IOMMU_SYS_IRQ,
+                                 LYNX_IOMMU_SYS_IRQ,
                                  &error_fatal);
         object_property_set_link(OBJECT(iommu_sys), "irqchip",
                                  OBJECT(mmio_irqchip),

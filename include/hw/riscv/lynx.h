@@ -96,7 +96,7 @@ enum {
     LYNX_VIRTIO_IRQ = 1, /* 1 to 8 */
     LYNX_VIRTIO_COUNT = 8,
     LYNX_PCIE_IRQ = 0x20, /* 32 to 35 */
-    IOMMU_SYS_IRQ = 0x24, /* 36-39 */
+    LYNX_IOMMU_SYS_IRQ = 0x24, /* 36-39 */
     VIRT_PLATFORM_BUS_IRQ = 64, /* 64 to 95 */
 };
 
