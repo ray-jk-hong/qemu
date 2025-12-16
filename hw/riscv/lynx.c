@@ -75,7 +75,6 @@ static bool lynx_aclint_allowed(void)
 }
 
 static const MemMapEntry lynx_memmap[] = {
-    [LYNX_DEBUG] =        {        0x0,         0x100 },
     [LYNX_MROM] =         {     0x1000,        0xf000 },
     [LYNX_RTC] =          {   0x101000,        0x1000 },
     [LYNX_CLINT] =        {  0x2000000,       0x10000 },
@@ -963,15 +962,13 @@ static void lynx_machine_class_init(ObjectClass *oc, const void *data)
     machine_class_allow_dynamic_sysbus_dev(mc, TYPE_TPM_TIS_SYSBUS);
 #endif
 
-    object_class_property_add_bool(oc, "aclint", lynx_get_aclint,
-                                   lynx_set_aclint);
+    object_class_property_add_bool(oc, "aclint", lynx_get_aclint, lynx_set_aclint);
     object_class_property_set_description(oc, "aclint",
                                           "(TCG only) Set on/off to "
                                           "enable/disable emulating "
                                           "ACLINT devices");
 
-    object_class_property_add_str(oc, "aia", lynx_get_aia,
-                                  lynx_set_aia);
+    object_class_property_add_str(oc, "aia", lynx_get_aia, lynx_set_aia);
     object_class_property_set_description(oc, "aia",
                                           "Set type of AIA interrupt "
                                           "controller. Valid values are "
