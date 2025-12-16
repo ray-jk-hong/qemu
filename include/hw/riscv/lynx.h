@@ -69,7 +69,6 @@ struct RISCVLynxState {
 enum {
     LYNX_DEBUG,
     LYNX_MROM,
-    LYNX_TEST,
     LYNX_RTC,
     LYNX_CLINT,
     LYNX_ACLINT_SSWI,

@@ -77,7 +77,6 @@ static bool lynx_aclint_allowed(void)
 static const MemMapEntry lynx_memmap[] = {
     [LYNX_DEBUG] =        {        0x0,         0x100 },
     [LYNX_MROM] =         {     0x1000,        0xf000 },
-    [LYNX_TEST] =         {   0x100000,        0x1000 },
     [LYNX_RTC] =          {   0x101000,        0x1000 },
     [LYNX_CLINT] =        {  0x2000000,       0x10000 },
     [LYNX_ACLINT_SSWI] =  {  0x2F00000,        0x4000 },
@@ -713,9 +712,6 @@ static void lynx_machine_init(MachineState *machine)
      */
     s->fw_cfg = lynx_create_fw_cfg(machine, s->memmap[LYNX_FW_CFG].base);
     rom_set_fw(s->fw_cfg);
-
-    /* SiFive Test MMIO device */
-    sifive_test_create(s->memmap[LYNX_TEST].base);
 
     /* VirtIO MMIO devices */
     for (i = 0; i < LYNX_VIRTIO_COUNT; i++) {
