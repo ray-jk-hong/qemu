@@ -75,7 +75,7 @@ static bool lynx_aclint_allowed(void)
 }
 
 static const MemMapEntry lynx_memmap[] = {
-    [LYNX_MROM] =         {     0x1000,        0xf000 },
+    [LYNX_MROM] =         {LYNX_RSTVEC,        0xf000 },
     [LYNX_RTC] =          {   0x101000,        0x1000 },
     [LYNX_CLINT] =        {  0x2000000,       0x10000 },
     [LYNX_ACLINT_SSWI] =  {  0x2F00000,        0x4000 },
@@ -603,6 +603,8 @@ static void lynx_machine_init(MachineState *machine)
                                 base_hartid, &error_abort);
         object_property_set_int(OBJECT(&s->soc[i]), "num-harts",
                                 hart_count, &error_abort);
+        object_property_set_int(OBJECT(&s->soc[i]), "resetvec",
+                                LYNX_RSTVEC, &error_abort);
         sysbus_realize(SYS_BUS_DEVICE(&s->soc[i]), &error_fatal);
 
         if (lynx_aclint_allowed() && s->have_aclint) {
@@ -724,7 +726,7 @@ static void lynx_machine_init(MachineState *machine)
     lynx_create_platform_bus(s, mmio_irqchip);
 
     serial_mm_init(system_memory, s->memmap[LYNX_UART0].base,
-        LYNX_SERIAL_REG_SHIFT, qdev_get_gpio_in(mmio_irqchip, LYNX_UART0_IRQ), 
+        LYNX_SERIAL_REG_SHIFT, qdev_get_gpio_in(mmio_irqchip, LYNX_UART0_IRQ),
         399193, serial_hd(0), DEVICE_LITTLE_ENDIAN);
 
     sysbus_create_simple("goldfish_rtc", s->memmap[LYNX_RTC].base,
@@ -744,7 +746,7 @@ static void lynx_machine_init(MachineState *machine)
             error_report("load_device_tree() failed");
             exit(1);
         }
-    } 
+    }
 
     if (lynx_is_iommu_sys_enabled(s)) {
         DeviceState *iommu_sys = qdev_new(TYPE_RISCV_IOMMU_SYS);

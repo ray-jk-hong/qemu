@@ -30,6 +30,8 @@
 #define LYNX_SOCKETS_MAX_BITS          2
 #define LYNX_SOCKETS_MAX               (1 << LYNX_SOCKETS_MAX_BITS)
 
+#define LYNX_RSTVEC 0x1000 /* Same with MROM address */
+
 #define TYPE_RISCV_LYNX_MACHINE MACHINE_TYPE_NAME("lynx")
 typedef struct RISCVLynxState RISCVLynxState;
 DECLARE_INSTANCE_CHECKER(RISCVLynxState, RISCV_LYNX_MACHINE,
