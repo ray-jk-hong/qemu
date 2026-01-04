@@ -162,4 +162,6 @@ uint32_t lynx_imsic_num_bits(uint32_t count);
 #error "Can't accommodate all IMSIC groups in address space"
 #endif
 
+#define LYNX_SERIAL_REG_SHIFT 2
+
 #endif

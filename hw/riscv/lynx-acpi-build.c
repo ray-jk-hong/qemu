@@ -187,7 +187,7 @@ acpi_dsdt_add_uart(Aml *scope, const MemMapEntry *uart_memmap,
 
     Aml *pkg_shift = aml_package(2);
     aml_append(pkg_shift, aml_string("reg-shift"));
-    aml_append(pkg_shift, aml_int(2));
+    aml_append(pkg_shift, aml_int(LYNX_SERIAL_REG_SHIFT));
 
     Aml *pkg_properties = aml_package(2);
     aml_append(pkg_properties, pkg_clock);

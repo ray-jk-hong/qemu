@@ -59,8 +59,6 @@
 #include "hw/virtio/virtio-iommu.h"
 #include "hw/uefi/var-service-api.h"
 
-#define LYNX_SERIAL_REG_SHIFT 2
-
 /* KVM AIA only supports APLIC MSI. APLIC Wired is always emulated by QEMU. */
 static bool lynx_use_kvm_aia_aplic_imsic(RISCVLynxAIAType aia_type)
 {
