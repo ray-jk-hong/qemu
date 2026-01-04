@@ -181,18 +181,23 @@ acpi_dsdt_add_uart(Aml *scope, const MemMapEntry *uart_memmap,
                                AML_EXCLUSIVE, &uart_irq, 1));
     aml_append(dev, aml_name_decl("_CRS", crs));
 
-    Aml *pkg = aml_package(2);
-    aml_append(pkg, aml_string("clock-frequency"));
-    aml_append(pkg, aml_int(3686400));
+    Aml *pkg_clock = aml_package(2);
+    aml_append(pkg_clock, aml_string("clock-frequency"));
+    aml_append(pkg_clock, aml_int(3686400));
+
+    Aml *pkg_shift = aml_package(2);
+    aml_append(pkg_shift, aml_string("reg-shift"));
+    aml_append(pkg_shift, aml_int(2));
+
+    Aml *pkg_properties = aml_package(2);
+    aml_append(pkg_properties, pkg_clock);
+    aml_append(pkg_properties, pkg_shift);
 
     Aml *UUID = aml_touuid("DAFFD814-6EBA-4D8C-8A91-BC9BBF4AA301");
 
-    Aml *pkg1 = aml_package(1);
-    aml_append(pkg1, pkg);
-
     Aml *package = aml_package(2);
     aml_append(package, UUID);
-    aml_append(package, pkg1);
+    aml_append(package, pkg_properties);
 
     aml_append(dev, aml_name_decl("_DSD", package));
     aml_append(scope, dev);
@@ -238,7 +243,7 @@ spcr_setup(GArray *table_data, BIOSLinker *linker, RISCVLynxState *s)
         .base_addr.id = AML_AS_SYSTEM_MEMORY,
         .base_addr.width = 32,
         .base_addr.offset = 0,
-        .base_addr.size = 1,
+        .base_addr.size = 3,
         .base_addr.addr = s->memmap[LYNX_UART0].base,
         .interrupt_type = (1 << 4),/* Bit[4] RISC-V PLIC/APLIC */
         .pc_interrupt = 0,

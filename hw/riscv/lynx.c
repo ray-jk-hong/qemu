@@ -136,8 +136,8 @@ static PFlashCFI01 *lynx_flash_create1(RISCVLynxState *s,
 
 static void lynx_flash_create(RISCVLynxState *s)
 {
-    s->flash[0] = lynx_flash_create1(s, "virt.flash0", "pflash0");
-    s->flash[1] = lynx_flash_create1(s, "virt.flash1", "pflash1");
+    s->flash[0] = lynx_flash_create1(s, "lynx.flash0", "pflash0");
+    s->flash[1] = lynx_flash_create1(s, "lynx.flash1", "pflash1");
 }
 
 static void lynx_flash_map1(PFlashCFI01 *flash,
