@@ -99,7 +99,7 @@ void pcie_host_mmcfg_init(PCIExpressHost *e, uint32_t size)
     memory_region_set_size(&e->mmio, e->size);
 }
 
-void pcie_host_mmcfg_map(PCIExpressHost *e, hwaddr addr,
+static void pcie_host_mmcfg_map(PCIExpressHost *e, hwaddr addr,
                          uint32_t size)
 {
     pcie_host_mmcfg_init(e, size);
