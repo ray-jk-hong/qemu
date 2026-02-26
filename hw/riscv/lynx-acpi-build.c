@@ -183,7 +183,7 @@ acpi_dsdt_add_uart(Aml *scope, const MemMapEntry *uart_memmap,
 
     Aml *pkg_clock = aml_package(2);
     aml_append(pkg_clock, aml_string("clock-frequency"));
-    aml_append(pkg_clock, aml_int(3686400));
+    aml_append(pkg_clock, aml_int(lynx_uart_get_clock_hz()));
 
     Aml *pkg_shift = aml_package(2);
     aml_append(pkg_shift, aml_string("reg-shift"));

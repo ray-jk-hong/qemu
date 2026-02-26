@@ -725,7 +725,7 @@ static void lynx_machine_init(MachineState *machine)
 
     serial_mm_init(system_memory, s->memmap[LYNX_UART0].base,
         LYNX_SERIAL_REG_SHIFT, qdev_get_gpio_in(mmio_irqchip, LYNX_UART0_IRQ),
-        399193, serial_hd(0), DEVICE_LITTLE_ENDIAN);
+        lynx_uart_get_clock_hz(), serial_hd(0), DEVICE_LITTLE_ENDIAN);
 
     sysbus_create_simple("goldfish_rtc", s->memmap[LYNX_RTC].base,
         qdev_get_gpio_in(mmio_irqchip, LYNX_RTC_IRQ));

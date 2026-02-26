@@ -164,4 +164,21 @@ uint32_t lynx_imsic_num_bits(uint32_t count);
 
 #define LYNX_SERIAL_REG_SHIFT 2
 
+/* 24MHz晶振，通过 PLL * 25 / 2 -> 300MHz，再给 UART 分频 */
+#define LYNX_XTAL_FREQ_HZ      24000000u      /* 晶振频率 */
+#define LYNX_UART_PLL_MULT     25u            /* PLL 倍频 */
+#define LYNX_UART_PLL_DIV      2u             /* PLL 分频 */
+
+/* UART 再做一次整数分频，比如从 PLL 时钟分到 UART 内部时钟 */
+#define LYNX_UART_CLK_DIV      16u            /* UART 内部时钟 = PLL / 16 */
+
+static inline uint64_t lynx_uart_get_clock_hz(void)
+{
+    uint64_t uart_pll_hz = (uint64_t)LYNX_XTAL_FREQ_HZ * (uint64_t)LYNX_UART_PLL_MULT /
+                            (uint64_t)LYNX_UART_PLL_DIV;
+    uint64_t uart_clk_hz = uart_pll_hz / (uint64_t)LYNX_UART_CLK_DIV;
+
+    return uart_clk_hz;
+}
+
 #endif
