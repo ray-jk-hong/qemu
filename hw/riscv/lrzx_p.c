@@ -131,16 +131,54 @@ static void lrzx_p_sbi_load(RISCVLrzxPState *s)
 #endif
 }
 
-static void lrzx_p_kernel_load(RISCVLrzxPState *s)
+/*
+ * Host-side DT only. Do not riscv_load_fdt here: riscv_load_kernel will add
+ * /chosen properties; guest RAM must receive the blob after that.
+ */
+static void lrzx_p_fdt_load_host(MachineState *ms)
 {
-    hwaddr kernel_start;
+    int fdt_file_bufsz;
+    int ret;
+    size_t cap;
+    void *expanded;
+
+    g_assert(ms->dtb != NULL);
+    ms->fdt = load_device_tree(ms->dtb, &fdt_file_bufsz);
+    if (!ms->fdt) {
+        error_report("load_device_tree() failed");
+        exit(1);
+    }
+
+    cap = MAX((size_t)fdt_totalsize(ms->fdt) * 4,
+              (size_t)fdt_totalsize(ms->fdt) + 256 * KiB);
+    if (cap > INT_MAX / 2) {
+        error_report("lrzx_p: device tree too large");
+        exit(1);
+    }
+    expanded = g_malloc0(cap);
+    ret = fdt_open_into(ms->fdt, expanded, cap);
+    if (ret < 0) {
+        error_report("lrzx_p: fdt_open_into: %s", fdt_strerror(ret));
+        exit(1);
+    }
+    g_free(ms->fdt);
+    ms->fdt = expanded;
+}
+
+static void lrzx_p_load_firmware(RISCVLrzxPState *s)
+{
     MachineState *ms = MACHINE(s);
     RISCVBootInfo boot_info;
+    hwaddr kernel_start;
+    hwaddr dram_base = s->memmap[LRZX_P_DEV_DRAM].base;
+    hwaddr dram_size = s->memmap[LRZX_P_DEV_DRAM].size;
+    hwaddr fdt_load_addr;
+
+    lrzx_p_sbi_load(s);
+    lrzx_p_fdt_load_host(ms);
 
     riscv_boot_info_init(&boot_info, &s->soc[0]);
-
     g_assert(ms->kernel_filename != NULL);
-
     kernel_start = QEMU_ALIGN_UP(s->boot_info.sbi_end, 2 * MiB);
     riscv_load_kernel(ms, &boot_info, kernel_start, true, NULL);
 
@@ -148,60 +186,24 @@ static void lrzx_p_kernel_load(RISCVLrzxPState *s)
     s->boot_info.kernel_end = boot_info.image_high_addr;
     s->boot_info.kernel_entry = boot_info.image_low_addr;
 
-#ifdef LRZX_P_DEBUG
-    qemu_printf("Load kernel: base=0x%llx, size=0x%llx\n",
-        (unsigned long long)kernel_start, (unsigned long long)s->boot_info.kernel_end);
-#endif
-}
-
-static void lrzx_p_dts_load(RISCVLrzxPState *s)
-{
-    hwaddr dram_base = s->memmap[LRZX_P_DEV_DRAM].base;
-    MachineState *ms = MACHINE(s);
-    hwaddr dram_end, dram_size;
-    hwaddr dtb_start, dtb_end;
-    int fdt_size;
-
-    g_assert(ms->dtb != NULL);
-
-    ms->fdt = load_device_tree(ms->dtb, &fdt_size);
-    if (!ms->fdt) {
-        error_report("load_device_tree() failed");
-        exit(1);
-    }
-
-    // g_assert(fdt_pack(ms->fdt) == 0);
-
-    fdt_size = fdt_totalsize(ms->fdt);
-    g_assert(fdt_size > 0);
-
-    dram_size = ms->ram_size;
-    dram_end = dram_base + dram_size;
-
-    dtb_start = QEMU_ALIGN_DOWN(dram_end - fdt_size, 2 * MiB);
-    dtb_end = dtb_start + fdt_size;
-
-    riscv_load_fdt(dtb_start, ms->fdt);
-
-    s->boot_info.dts_start = dtb_start;
-    s->boot_info.dts_end = dtb_end;
+    fdt_load_addr = riscv_compute_fdt_addr(dram_base, dram_size, ms,
+                                             &boot_info);
+    riscv_load_fdt(fdt_load_addr, ms->fdt);
+    s->boot_info.dts_start = fdt_load_addr;
+    s->boot_info.dts_end = fdt_load_addr + fdt_totalsize(ms->fdt);
 
 #ifdef LRZX_P_DEBUG
-    qemu_printf("Load dts: base=0x%llx, size=0x%llx\n",
-        (unsigned long long)dtb_start, (unsigned long long)fdt_size);
+    qemu_printf("kernel 0x%llx..0x%llx entry 0x%llx dtb 0x%llx\n",
+                (unsigned long long)s->boot_info.kernel_start,
+                (unsigned long long)s->boot_info.kernel_end,
+                (unsigned long long)s->boot_info.kernel_entry,
+                (unsigned long long)fdt_load_addr);
 #endif
-}
-
-static void lrzx_p_load_firmware(RISCVLrzxPState *s)
-{
-    lrzx_p_sbi_load(s);
-    lrzx_p_kernel_load(s);
 }
 
 static void lrzx_p_machine_done(Notifier *notifier, void *data)
 {
-    RISCVLrzxPState *s = container_of(notifier, RISCVLrzxPState,
-        notifier);
+    RISCVLrzxPState *s = container_of(notifier, RISCVLrzxPState, notifier);
     lrzx_p_load_firmware(s);
     lrzx_p_rom_fill(s);
 }
@@ -337,8 +339,6 @@ static void lrzx_p_machine_init(MachineState *ms)
 
     /* Initialize UART */
     lrzx_p_uart_init(s);
-
-    lrzx_p_dts_load(s);
 
     s->notifier.notify = lrzx_p_machine_done;
     qemu_add_machine_init_done_notifier(&s->notifier);
