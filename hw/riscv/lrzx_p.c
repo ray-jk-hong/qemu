@@ -132,79 +132,82 @@ static void lrzx_p_sbi_load(RISCVLrzxPState *s)
 }
 
 /*
- * Host-side DT only. Do not riscv_load_fdt here: riscv_load_kernel will add
- * /chosen properties; guest RAM must receive the blob after that.
+ * Load dts file to qemu memory and save to ms->fdt
+ * Must be called before riscv_load_kernel, because riscv_load_kernel will add
+ * /chosen properties and guest RAM must receive the blob after that.
  */
-static void lrzx_p_fdt_load_host(MachineState *ms)
+static void lrzx_p_fdt_pre_load(MachineState *ms)
 {
-    int fdt_file_bufsz;
-    int ret;
-    size_t cap;
-    void *expanded;
+    int fdt_size;
 
     g_assert(ms->dtb != NULL);
-    ms->fdt = load_device_tree(ms->dtb, &fdt_file_bufsz);
+    ms->fdt = load_device_tree(ms->dtb, &fdt_size);
     if (!ms->fdt) {
         error_report("load_device_tree() failed");
         exit(1);
     }
-
-    cap = MAX((size_t)fdt_totalsize(ms->fdt) * 4,
-              (size_t)fdt_totalsize(ms->fdt) + 256 * KiB);
-    if (cap > INT_MAX / 2) {
-        error_report("lrzx_p: device tree too large");
-        exit(1);
-    }
-    expanded = g_malloc0(cap);
-    ret = fdt_open_into(ms->fdt, expanded, cap);
-    if (ret < 0) {
-        error_report("lrzx_p: fdt_open_into: %s", fdt_strerror(ret));
-        exit(1);
-    }
-    g_free(ms->fdt);
-    ms->fdt = expanded;
 }
 
-static void lrzx_p_load_firmware(RISCVLrzxPState *s)
+static void lrzx_p_kernel_load(RISCVLrzxPState *s, RISCVBootInfo *boot_info)
 {
     MachineState *ms = MACHINE(s);
-    RISCVBootInfo boot_info;
     hwaddr kernel_start;
-    hwaddr dram_base = s->memmap[LRZX_P_DEV_DRAM].base;
-    hwaddr dram_size = s->memmap[LRZX_P_DEV_DRAM].size;
-    hwaddr fdt_load_addr;
 
-    lrzx_p_sbi_load(s);
-    lrzx_p_fdt_load_host(ms);
-
-    riscv_boot_info_init(&boot_info, &s->soc[0]);
     g_assert(ms->kernel_filename != NULL);
     kernel_start = QEMU_ALIGN_UP(s->boot_info.sbi_end, 2 * MiB);
-    riscv_load_kernel(ms, &boot_info, kernel_start, true, NULL);
+    riscv_load_kernel(ms, boot_info, kernel_start, true, NULL);
 
     s->boot_info.kernel_start = kernel_start;
-    s->boot_info.kernel_end = boot_info.image_high_addr;
-    s->boot_info.kernel_entry = boot_info.image_low_addr;
+    s->boot_info.kernel_end = boot_info->image_high_addr;
+    s->boot_info.kernel_entry = boot_info->image_low_addr;
+#ifdef LRZX_P_DEBUG
+    qemu_printf("Load kernel: start=0x%llx, end=0x%llx, entry=0x%llx\n",
+        (unsigned long long)s->boot_info.kernel_start,
+        (unsigned long long)s->boot_info.kernel_end,
+        (unsigned long long)s->boot_info.kernel_entry);
+#endif
+}
+
+/* Load fdt to real memory */
+static void lrzx_p_fdt_load(RISCVLrzxPState *s, RISCVBootInfo *boot_info)
+{
+    hwaddr dram_base = s->memmap[LRZX_P_DEV_DRAM].base;
+    hwaddr dram_size = s->memmap[LRZX_P_DEV_DRAM].size;
+    MachineState *ms = MACHINE(s);
+    hwaddr fdt_load_addr;
 
     fdt_load_addr = riscv_compute_fdt_addr(dram_base, dram_size, ms,
-                                             &boot_info);
+                                             boot_info);
     riscv_load_fdt(fdt_load_addr, ms->fdt);
     s->boot_info.dts_start = fdt_load_addr;
     s->boot_info.dts_end = fdt_load_addr + fdt_totalsize(ms->fdt);
 
 #ifdef LRZX_P_DEBUG
-    qemu_printf("kernel 0x%llx..0x%llx entry 0x%llx dtb 0x%llx\n",
-                (unsigned long long)s->boot_info.kernel_start,
-                (unsigned long long)s->boot_info.kernel_end,
-                (unsigned long long)s->boot_info.kernel_entry,
-                (unsigned long long)fdt_load_addr);
+    qemu_printf("Load fdt: start=0x%llx, end=0x%llx\n",
+        (unsigned long long)s->boot_info.dts_start,
+        (unsigned long long)s->boot_info.dts_end);
 #endif
+}
+
+static void lrzx_p_firmware_load(RISCVLrzxPState *s)
+{
+    MachineState *ms = MACHINE(s);
+    RISCVBootInfo boot_info;
+
+    riscv_boot_info_init(&boot_info, &s->soc[0]);
+
+    lrzx_p_sbi_load(s);
+    /* Preload fdt to qemu memory, must be called before kernel load */
+    lrzx_p_fdt_pre_load(ms);
+
+    lrzx_p_kernel_load(s, &boot_info);
+    lrzx_p_fdt_load(s, &boot_info);
 }
 
 static void lrzx_p_machine_done(Notifier *notifier, void *data)
 {
     RISCVLrzxPState *s = container_of(notifier, RISCVLrzxPState, notifier);
-    lrzx_p_load_firmware(s);
+    lrzx_p_firmware_load(s);
     lrzx_p_rom_fill(s);
 }
 
@@ -249,7 +252,7 @@ static void lrzx_p_uart_init(RISCVLrzxPState *s)
 {
     serial_mm_init(get_system_memory(),
                    s->memmap[LRZX_P_DEV_UART0].base,
-                   2,
+                   2, /* reg-shift= 2  */
                    qdev_get_gpio_in(s->irqchip[0], LYNX_UART0_IRQ),
                    10000000,
                    serial_hd(0),
@@ -266,6 +269,7 @@ static void lrzx_p_aclint_init(RISCVLrzxPState *s, int soc_id)
         soc_id * s->memmap[LRZX_P_DEV_CLINT].size,
         base_hartid, hart_count, false);
 
+    /* For access MTIMER/STIMER CRS */
     riscv_aclint_mtimer_create(s->memmap[LRZX_P_DEV_CLINT].base +
         soc_id * s->memmap[LRZX_P_DEV_CLINT].size +
         RISCV_ACLINT_SWI_SIZE,
@@ -278,6 +282,23 @@ static void lrzx_p_aclint_init(RISCVLrzxPState *s, int soc_id)
     riscv_aclint_swi_create(s->memmap[LRZX_P_DEV_ACLINT_SSWI].base +
         soc_id * s->memmap[LRZX_P_DEV_ACLINT_SSWI].size,
         base_hartid, hart_count, true);
+
+#ifdef LRZX_P_DEBUG
+    qemu_printf("Init aclint: base=0x%llx, size=0x%llx, hart_count=%u\n",
+        (unsigned long long)s->memmap[LRZX_P_DEV_CLINT].base +
+        soc_id * s->memmap[LRZX_P_DEV_CLINT].size,
+        (unsigned long long)s->memmap[LRZX_P_DEV_CLINT].size,
+        hart_count);
+    qemu_printf("Init mtimer-aclint: base=0x%llx, size=0x%llx, hart_count=%u\n",
+        (unsigned long long)s->memmap[LRZX_P_DEV_CLINT].base +
+        soc_id * s->memmap[LRZX_P_DEV_CLINT].size + RISCV_ACLINT_SWI_SIZE,
+        (unsigned long long)RISCV_ACLINT_DEFAULT_MTIMER_SIZE, hart_count);
+    qemu_printf("Init sswi-aclint: base=0x%llx, size=0x%llx, hart_count=%u\n",
+        (unsigned long long)s->memmap[LRZX_P_DEV_ACLINT_SSWI].base +
+        soc_id * s->memmap[LRZX_P_DEV_ACLINT_SSWI].size,
+        (unsigned long long)s->memmap[LRZX_P_DEV_ACLINT_SSWI].size,
+        hart_count);
+#endif
 }
 
 static DeviceState *lrzx_p_create_aia(RISCVLrzxPState *s, int soc_id)
@@ -304,7 +325,8 @@ static DeviceState *lrzx_p_create_aia(RISCVLrzxPState *s, int soc_id)
         LRZX_P_IRQCHIP_NUM_PRIO_BITS,
         false, false, aplic_m);
 
-    (void)aplic_s;
+    UNUSED(aplic_s);
+
     /*
      * Only the root (M-mode) APLIC gets qdev GPIO inputs; child S-APLIC does
      * not. Wired devices must use aplic_m here.
