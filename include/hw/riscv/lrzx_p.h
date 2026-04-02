@@ -85,8 +85,6 @@ enum {
 #define LRZX_P_IRQCHIP_NUM_SOURCES      96
 #define LRZX_P_IRQCHIP_NUM_PRIO_BITS    3
 
-#define LRZX_P_DEBUG
-
 #define UNUSED(__x) (void)__x
 
 #endif

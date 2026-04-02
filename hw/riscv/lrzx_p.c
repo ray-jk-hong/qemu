@@ -73,10 +73,6 @@ static inline void lrzx_p_rom_add(const MemMapEntry *memmap)
         rom_map->size, &error_fatal);
     /* Add rom to memregion */
     memory_region_add_subregion(get_system_memory(), rom_map->base, rom_mr);
-#ifdef LRZX_P_DEBUG
-    qemu_printf("Add rom to memregion: base=0x%llx, size=0x%llx\n",
-        (unsigned long long)rom_map->base, (unsigned long long)rom_map->size);
-#endif
 }
 
 /* Fill rom with reset vector */
@@ -91,13 +87,6 @@ static void lrzx_p_rom_fill(RISCVLrzxPState *s)
         s->memmap[LRZX_P_DEV_MROM].base,
         s->memmap[LRZX_P_DEV_MROM].size, kernel_entry,
         fdt_load_addr);
-#ifdef LRZX_P_DEBUG
-    qemu_printf("Fill rom: base=0x%llx, size=0x%llx, kernel_entry=0x%llx, fdt_load_addr=0x%llx\n",
-        (unsigned long long)s->memmap[LRZX_P_DEV_MROM].base,
-        (unsigned long long)s->memmap[LRZX_P_DEV_MROM].size,
-        (unsigned long long)kernel_entry,
-        (unsigned long long)fdt_load_addr);
-#endif
 }
 
 /* Add main memory */
@@ -106,12 +95,6 @@ static inline void lrzx_p_ram_add(RISCVLrzxPState *s)
     MachineState *ms = MACHINE(s);
     memory_region_add_subregion(get_system_memory(),
         s->memmap[LRZX_P_DEV_DRAM].base, ms->ram);
-
-#ifdef LRZX_P_DEBUG
-    qemu_printf("Add ram to memregion: base=0x%llx, size=0x%llx\n",
-        (unsigned long long)s->memmap[LRZX_P_DEV_DRAM].base,
-        (unsigned long long)s->memmap[LRZX_P_DEV_DRAM].size);
-#endif
 }
 
 static void lrzx_p_sbi_load(RISCVLrzxPState *s)
@@ -124,11 +107,6 @@ static void lrzx_p_sbi_load(RISCVLrzxPState *s)
     sbi_end = riscv_load_firmware(ms->firmware, &sbi_start, NULL);
     s->boot_info.sbi_start = sbi_start;
     s->boot_info.sbi_end = sbi_end;
-
-#ifdef LRZX_P_DEBUG
-    qemu_printf("Load sbi: base=0x%llx, size=0x%llx\n",
-        (unsigned long long)sbi_start, (unsigned long long)sbi_end);
-#endif
 }
 
 /*
@@ -160,12 +138,6 @@ static void lrzx_p_kernel_load(RISCVLrzxPState *s, RISCVBootInfo *boot_info)
     s->boot_info.kernel_start = kernel_start;
     s->boot_info.kernel_end = boot_info->image_high_addr;
     s->boot_info.kernel_entry = boot_info->image_low_addr;
-#ifdef LRZX_P_DEBUG
-    qemu_printf("Load kernel: start=0x%llx, end=0x%llx, entry=0x%llx\n",
-        (unsigned long long)s->boot_info.kernel_start,
-        (unsigned long long)s->boot_info.kernel_end,
-        (unsigned long long)s->boot_info.kernel_entry);
-#endif
 }
 
 /* Load fdt to real memory */
@@ -181,12 +153,6 @@ static void lrzx_p_fdt_load(RISCVLrzxPState *s, RISCVBootInfo *boot_info)
     riscv_load_fdt(fdt_load_addr, ms->fdt);
     s->boot_info.dts_start = fdt_load_addr;
     s->boot_info.dts_end = fdt_load_addr + fdt_totalsize(ms->fdt);
-
-#ifdef LRZX_P_DEBUG
-    qemu_printf("Load fdt: start=0x%llx, end=0x%llx\n",
-        (unsigned long long)s->boot_info.dts_start,
-        (unsigned long long)s->boot_info.dts_end);
-#endif
 }
 
 static void lrzx_p_firmware_load(RISCVLrzxPState *s)
@@ -282,23 +248,6 @@ static void lrzx_p_aclint_init(RISCVLrzxPState *s, int soc_id)
     riscv_aclint_swi_create(s->memmap[LRZX_P_DEV_ACLINT_SSWI].base +
         soc_id * s->memmap[LRZX_P_DEV_ACLINT_SSWI].size,
         base_hartid, hart_count, true);
-
-#ifdef LRZX_P_DEBUG
-    qemu_printf("Init aclint: base=0x%llx, size=0x%llx, hart_count=%u\n",
-        (unsigned long long)s->memmap[LRZX_P_DEV_CLINT].base +
-        soc_id * s->memmap[LRZX_P_DEV_CLINT].size,
-        (unsigned long long)s->memmap[LRZX_P_DEV_CLINT].size,
-        hart_count);
-    qemu_printf("Init mtimer-aclint: base=0x%llx, size=0x%llx, hart_count=%u\n",
-        (unsigned long long)s->memmap[LRZX_P_DEV_CLINT].base +
-        soc_id * s->memmap[LRZX_P_DEV_CLINT].size + RISCV_ACLINT_SWI_SIZE,
-        (unsigned long long)RISCV_ACLINT_DEFAULT_MTIMER_SIZE, hart_count);
-    qemu_printf("Init sswi-aclint: base=0x%llx, size=0x%llx, hart_count=%u\n",
-        (unsigned long long)s->memmap[LRZX_P_DEV_ACLINT_SSWI].base +
-        soc_id * s->memmap[LRZX_P_DEV_ACLINT_SSWI].size,
-        (unsigned long long)s->memmap[LRZX_P_DEV_ACLINT_SSWI].size,
-        hart_count);
-#endif
 }
 
 static DeviceState *lrzx_p_create_aia(RISCVLrzxPState *s, int soc_id)
