@@ -81,3 +81,8 @@ config SPIKE
     select MSI_NONBROKEN
     select RISCV_ACLINT
     select SIFIVE_PLIC
+
+config LRZX_P
+    bool
+    default y
+    depends on RISCV32 || RISCV64
