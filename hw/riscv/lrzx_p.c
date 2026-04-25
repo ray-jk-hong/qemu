@@ -50,6 +50,8 @@
 static const MemMapEntry lrzx_p_memmap[] = {
     [LRZX_P_MROM] =        { LRZX_P_RSTVEC,        0xf000 },
 
+    [LRZX_P_UART0] =       { 0x1003002000,         0x100 },
+
     /* ACLINT MSWI base addr and size */
     [LRZX_P_CLINT] =       {  0x2000000,       0x10000 },
 
@@ -57,7 +59,7 @@ static const MemMapEntry lrzx_p_memmap[] = {
     [LRZX_P_ACLINT_SSWI] = {  0x2F00000,        0x4000 },
 
     [LRZX_P_PLIC] =        {  0xc000000, LRZX_P_PLIC_SIZE(LRZX_P_CPUS_MAX * 2) },
-    [LRZX_P_UART0] =       { 0x10000000,         0x100 },
+
     [LRZX_P_DRAM] =        { 0x80000000,           0x0 },
 };
 
@@ -292,7 +294,7 @@ static void lrzx_p_uart_init(RISCVLrzxPState *s)
 
     serial_mm_init(get_system_memory(),
         s->memmap[LRZX_P_UART0].base,
-        0,
+        2,
         qdev_get_gpio_in(plic, UART0_IRQ),
         399193,
         serial_hd(0),
