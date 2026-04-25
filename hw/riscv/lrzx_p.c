@@ -48,7 +48,7 @@
 #include "hw/riscv/lrzx_p.h"
 
 static const MemMapEntry lrzx_p_memmap[] = {
-    [LRZX_P_MROM] =        {     0x1000,        0xf000 },
+    [LRZX_P_MROM] =        { LRZX_P_RSTVEC,        0xf000 },
 
     /* ACLINT MSWI base addr and size */
     [LRZX_P_CLINT] =       {  0x2000000,       0x10000 },
@@ -210,15 +210,13 @@ static void lrzx_p_soc_init(RISCVLrzxPState *s)
         object_property_set_int(OBJECT(&s->soc[soc_id]), "num-harts",
                                 hart_count, &error_abort);
         object_property_set_int(OBJECT(&s->soc[soc_id]), "resetvec",
-                            LRZX_P_RSTVEC, &error_abort);
+                            s->rstvec, &error_abort);
         sysbus_realize(SYS_BUS_DEVICE(&s->soc[soc_id]), &error_abort);
         s->soc_info[soc_id].hart_num = hart_count;
         s->soc_info[soc_id].hart_base = base_hartid;
     }
 
     s->soc_num = soc_num;
-    s->memmap = lrzx_p_memmap;
-    s->rstvec = LRZX_P_RSTVEC;
 }
 
 static void lrzx_p_aclint_init(RISCVLrzxPState *s, int soc_id)
@@ -322,11 +320,18 @@ static void lrzx_p_ram_add(RISCVLrzxPState *s)
         ms->ram);
 }
 
+static void lrzx_p_state_init(RISCVLrzxPState *s)
+{
+    s->memmap = lrzx_p_memmap;
+    s->rstvec = LRZX_P_RSTVEC;
+    lrzx_p_soc_init(s);
+}
+
 static void lrzx_p_machine_init(MachineState *machine)
 {
     RISCVLrzxPState *s = LRZX_P_MACHINE(machine);
 
-    lrzx_p_soc_init(s);
+    lrzx_p_state_init(s);
 
     lrzx_p_rom_add(s);
     lrzx_p_ram_add(s);

@@ -90,6 +90,6 @@ enum {
 #define LRZX_P_PLIC_SIZE(__num_context) \
     (LRZX_P_PLIC_CONTEXT_BASE + (__num_context) * LRZX_P_PLIC_CONTEXT_STRIDE)
 
-#define LRZX_P_RSTVEC    0x1000
+#define LRZX_P_RSTVEC    0x1090000000
 
 #endif
