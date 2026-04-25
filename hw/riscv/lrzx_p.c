@@ -53,7 +53,7 @@ static const MemMapEntry lrzx_p_memmap[] = {
     [LRZX_P_UART0] =       { 0x1003002000,         0x100 },
 
     /* ACLINT MSWI base addr and size */
-    [LRZX_P_CLINT] =       {  0x2000000,       0x10000 },
+    [LRZX_P_CLINT] =       {  0x2000016000,       0x10000 },
 
     /* ACLINT SSWI*/
     [LRZX_P_ACLINT_SSWI] = {  0x2F00000,        0x4000 },
